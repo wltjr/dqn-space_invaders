@@ -330,8 +330,8 @@ int main(int argc, char* argv[])
     // load model
     if(args.load)
         torch::load(model, args.load_file);
-    // else
-    //     model = std::make_shared<NetImpl>();
+    else
+        model = std::make_shared<NetImpl>();
 
     // must load or train
     if(!args.load && !args.train)
