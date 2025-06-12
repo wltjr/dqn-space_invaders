@@ -35,13 +35,11 @@ const char *argp_program_bug_address = "w@wltjr.com";
 const char *PT_FILE = "dqn_space_invaders.pt";
 
 const int ACTIONS = 6;
-const int CROP = 84;
 const int HEIGHT = 210;
 const int WIDTH = 160;
-const int CROP_X = 20;
-const int CROP_Y = 30;
-const int CROP_HEIGHT = 165;
-const int CROP_WIDTH = 120;
+const int CROP_X = 13; // (110 - 84) / 2
+const int CROP_HEIGHT = 84;
+const int CROP_WIDTH = 110;
 
 struct NetImpl : torch::nn::Module
 {
@@ -243,11 +241,16 @@ void train(args &args,
             std::vector<unsigned char> screen;
             ale::Action action;
             cv::Mat orig;
+            cv::Mat half;
+            cv::Size scale;
 
             // prepare current game screen for opencv
             ale.getScreenGrayscale(screen);
             orig = cv::Mat(HEIGHT, WIDTH, CV_8UC1, &screen[0]);
-            orig = cv::Mat(orig, cv::Rect(CROP_X, CROP_Y, CROP_WIDTH, CROP_HEIGHT));
+            scale.height = CROP_HEIGHT;
+            scale.width = CROP_WIDTH;
+            cv::resize(orig, half, scale);
+            half = cv::Mat(half, cv::Rect(CROP_X, 0, CROP_HEIGHT, CROP_HEIGHT));
 
             // take action & collect reward
             reward = ale.act(action);
