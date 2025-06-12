@@ -191,6 +191,30 @@ static struct argp argp	 =  { options, parse_opt };
 
 
 /**
+ * @brief Scale and crop the screen
+ * 
+ * @param ale reference to arcade learning environment
+ * @param state reference to opencv mat/image
+ * 
+ * @return state scaled and cropped screen
+ */
+cv::Mat scale_crop_screen(ale::ALEInterface &ale, cv::Mat &state)
+{
+    std::vector<unsigned char> screen;
+    cv::Mat orig;
+    cv::Size scale;
+
+    // prepare current game screen for opencv
+    ale.getScreenGrayscale(screen);
+    orig = cv::Mat(HEIGHT, WIDTH, CV_8UC1, &screen[0]);
+    scale.height = CROP_HEIGHT;
+    scale.width = CROP_WIDTH;
+    cv::resize(orig, state, scale);
+    return cv::Mat(state, cv::Rect(CROP_X, 0, CROP_HEIGHT, CROP_HEIGHT));
+}
+
+
+/**
  * @brief Train agent using deep q-network
  * 
  * @param args reference to args structure
@@ -236,19 +260,10 @@ void train(args &args,
         for(; !ale.game_over(); steps++)
         {
             ale::reward_t reward;
-            std::vector<unsigned char> screen;
             ale::Action action;
-            cv::Mat orig;
-            cv::Mat half;
-            cv::Size scale;
+            cv::Mat state;
 
-            // prepare current game screen for opencv
-            ale.getScreenGrayscale(screen);
-            orig = cv::Mat(HEIGHT, WIDTH, CV_8UC1, &screen[0]);
-            scale.height = CROP_HEIGHT;
-            scale.width = CROP_WIDTH;
-            cv::resize(orig, half, scale);
-            half = cv::Mat(half, cv::Rect(CROP_X, 0, CROP_HEIGHT, CROP_HEIGHT));
+            state = scale_crop_screen(ale, state);
 
             // take action & collect reward
             reward = ale.act(action);
