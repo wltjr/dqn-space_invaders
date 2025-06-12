@@ -12,8 +12,6 @@
 #include <ale/ale_interface.hpp>
 #include <opencv4/opencv2/opencv.hpp>
 #include <torch/torch.h>
-#include <torch/script.h>
-#include <torch/serialize.h>
 
 #define STRINGIFY(x) STRINGIFY2(x)
 #define STRINGIFY2(x) #x
