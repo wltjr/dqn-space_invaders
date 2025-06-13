@@ -26,7 +26,8 @@
 #define EPSILON 1.0              // exploration rate (starting value)
 #define EPSILON_MIN 0.1          // minimum exploration rate
 #define EPSILON_DECAY 0.999999   // decay rate for exploration
-#define MEMORY 50000
+#define MEMORY 50000             // replay memory buffer size
+#define MEMORY_MIN 10000         // minimum replay memory buffer size
 
 const char *argp_program_version = "Version 0.1";
 const char *argp_program_bug_address = "w@wltjr.com";
@@ -95,6 +96,7 @@ struct args
     bool train = false;
     int episodes = EPISODES;
     int memory = MEMORY;
+    int memory_min = MEMORY_MIN;
     int noop = NOOP;
     int skip = SKIP;
     float alpha = ALPHA;
@@ -123,6 +125,7 @@ static struct argp_option options[] = {
     {"epsilon",'E',STRINGIFY(EPSILON),0," Epsilon exploration rate (starting value)",2},
     {"final",'F',STRINGIFY(EPSILON_MIN),0," Final/minimum exploration rate (final value)",2},
     {"decay",'D',STRINGIFY(EPSILON_DECAY),0," Decay rate for exploration",2},
+    {"knowledge",'K',STRINGIFY(MEMORY_MIN),0," Replay memory buffer minimum knowledge/size",2},
     {"memory",'M',STRINGIFY(MEMORY),0," Replay memory buffer size",2},
     {"noop",'N',STRINGIFY(NOOP),0," Skip initial frames using noop action",2},
     {"skip",'S',STRINGIFY(SKIP),0," Skip frames and repeat actions",2},
@@ -181,6 +184,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
             break;
         case 'F':
             args->epsilon_min = arg ? atof (arg) : EPSILON_MIN;
+            break;
+        case 'K':
+            args->memory_min = arg ? atoi (arg) : MEMORY_MIN;
             break;
         case 'M':
             args->memory = arg ? atoi (arg) : MEMORY;
@@ -343,6 +349,10 @@ void train(args &args,
 
                 // add to memory/replay
                 memory.push_back({state, action, reward, next});
+
+                // minimum replay memory size
+                if(memory.size() == args.memory_min)
+                    continue;
 
                 // decay epsilon
                 args.epsilon = std::max(args.epsilon_min, 
