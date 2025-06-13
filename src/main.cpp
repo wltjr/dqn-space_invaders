@@ -205,6 +205,32 @@ static struct argp argp	 =  { options, parse_opt };
 
 
 /**
+ * @brief Convert int range 0-5 value to ALE action
+ * 
+ * @param i integer
+ * 
+ * @return ale::Action ALE action
+ */
+ale::Action int_to_action(int i)
+{
+    ale::Action a;
+
+    if(i == 2)
+        a = ale::Action::PLAYER_A_RIGHT;
+    else if(i == 3)
+        a = ale::Action::PLAYER_A_LEFT;
+    else if(i == 4)
+        a = ale::Action::PLAYER_A_RIGHTFIRE;
+    else if(i == 5)
+        a = ale::Action::PLAYER_A_LEFTFIRE;
+    else
+        a = static_cast<ale::Action>(i);
+
+    return a;
+}
+
+
+/**
  * @brief Scale and crop the screen
  * 
  * @param ale reference to arcade learning environment
@@ -280,6 +306,10 @@ void train(args &args,
             cv::Mat next;
 
             state = scale_crop_screen(ale, state);
+
+            // random action
+            if(args.train && rand_epsilon(gen) < args.epsilon)
+                action = int_to_action(rand_action(gen));
 
             // take action & collect reward
             reward = ale.act(action);
