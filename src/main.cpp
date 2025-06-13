@@ -307,6 +307,10 @@ void train(args &args,
                 else if(action == ale::Action::PLAYER_A_NOOP)
                     reward = -1;
 
+                // remove last if at capacity
+                if(memory.size() == args.memory)
+                    memory.pop_back();
+
                 // add to memory/replay
                 memory.push_back({state, action, reward, next});
 
