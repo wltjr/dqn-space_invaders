@@ -26,6 +26,7 @@
 #define EPSILON 1.0              // exploration rate (starting value)
 #define EPSILON_MIN 0.1          // minimum exploration rate
 #define EPSILON_DECAY 0.999999   // decay rate for exploration
+#define MEMORY 50000
 
 const char *argp_program_version = "Version 0.1";
 const char *argp_program_bug_address = "w@wltjr.com";
@@ -74,6 +75,14 @@ struct NetImpl : torch::nn::Module
 
 TORCH_MODULE(Net);
 
+struct Replay
+{
+    std::vector<unsigned char> screen_cur;
+    ale::Action action;
+    ale::reward_t reward;
+    std::vector<unsigned char> screen_next;
+};
+
 // command line arguments
 struct args
 {
@@ -85,6 +94,7 @@ struct args
     bool sound = false;
     bool train = false;
     int episodes = EPISODES;
+    int memory = MEMORY;
     int noop = NOOP;
     int skip = SKIP;
     float alpha = ALPHA;
@@ -111,8 +121,9 @@ static struct argp_option options[] = {
     {"alpha",'A',STRINGIFY(ALPHA),0," Alpha learning rate",2},
     {"gamma",'G',STRINGIFY(GAMMA),0," Gamma learning rate discount factor",2},
     {"epsilon",'E',STRINGIFY(EPSILON),0," Epsilon exploration rate (starting value)",2},
-    {"min",'M',STRINGIFY(EPSILON_MIN),0," Minimum exploration rate",2},
+    {"final",'F',STRINGIFY(EPSILON_MIN),0," Final/minimum exploration rate (final value)",2},
     {"decay",'D',STRINGIFY(EPSILON_DECAY),0," Decay rate for exploration",2},
+    {"memory",'M',STRINGIFY(MEMORY),0," Replay memory buffer size",2},
     {"noop",'N',STRINGIFY(NOOP),0," Skip initial frames using noop action",2},
     {"skip",'S',STRINGIFY(SKIP),0," Skip frames and repeat actions",2},
     {0,0,0,0,"GNU Options:", 3},
@@ -168,8 +179,11 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
         case 'E':
             args->epsilon = arg ? atof (arg) : EPSILON;
             break;
-        case 'M':
+        case 'F':
             args->epsilon_min = arg ? atof (arg) : EPSILON_MIN;
+            break;
+        case 'M':
+            args->memory = arg ? atoi (arg) : MEMORY;
             break;
         case 'N':
             args->noop = arg ? atoi (arg) : NOOP;
@@ -227,6 +241,7 @@ void train(args &args,
 {
     int max_episode;
     ale::reward_t max_score;
+    std::deque<struct Replay> memory(args.memory);
 
     // initialize random device
     std::random_device rd;
@@ -262,12 +277,15 @@ void train(args &args,
             ale::reward_t reward;
             ale::Action action;
             cv::Mat state;
+            cv::Mat next;
 
             state = scale_crop_screen(ale, state);
 
             // take action & collect reward
             reward = ale.act(action);
             total_reward += reward;
+
+            next = scale_crop_screen(ale, next);
 
             if(args.train)
             {
@@ -289,6 +307,8 @@ void train(args &args,
                 else if(action == ale::Action::PLAYER_A_NOOP)
                     reward = -1;
 
+                // add to memory/replay
+                memory.push_back({state, action, reward, next});
 
                 // decay epsilon
                 args.epsilon = std::max(args.epsilon_min, 
