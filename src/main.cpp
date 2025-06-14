@@ -387,7 +387,7 @@ void train(args &args,
                 memory.push_back({state, action, reward, next});
 
                 // minimum replay memory size
-                if(memory.size() == args.memory_min)
+                if(memory.size() < args.memory_min)
                     continue;
 
                 // decay epsilon
