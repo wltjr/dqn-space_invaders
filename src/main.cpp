@@ -67,6 +67,13 @@ struct NetImpl : torch::nn::Module
         return fc2(x);
     }
 
+    torch::Tensor act(torch::Tensor state)
+    {
+        torch::Tensor q_value = forward(state);
+        torch::Tensor action = std::get<1>(q_value.max(1));
+        return action;
+    }
+
     torch::nn::Conv2d conv1;
     torch::nn::Conv2d conv2;
     torch::nn::Conv2d conv3;
@@ -261,6 +268,25 @@ cv::Mat scale_crop_screen(ale::ALEInterface &ale, cv::Mat &state)
 
 
 /**
+ * @brief Convert ale screen/opencv mat image to tensor
+ * 
+ * @param state reference to ale screen/opencv mat image data
+ * 
+ * @return tensor representation of the ale screen/opencv mat image
+ */
+torch::Tensor state_to_tensor(std::vector<unsigned char> state)
+{
+    std::vector<int64_t> ints;
+    ints.reserve(state.size());
+
+    for (long unsigned int i = 0; i < state.size(); i++)
+        ints.push_back(int64_t(state[i]));
+
+    return torch::from_blob(ints.data(),{1, 2, CROP_HEIGHT, CROP_HEIGHT});
+}
+
+
+/**
  * @brief Train agent using deep q-network
  * 
  * @param args reference to args structure
@@ -274,7 +300,6 @@ void train(args &args,
     int max_episode;
     ale::reward_t max_score;
     std::deque<struct Replay> memory(args.memory);
-    std::shared_ptr<NetImpl> policy;
 
     // initialize random device
     std::random_device rd;
@@ -310,12 +335,20 @@ void train(args &args,
             ale::reward_t reward;
             ale::Action action;
             cv::Mat state;
+            torch::Tensor state_tensor;
 
             state = scale_crop_screen(ale, state);
+            state_tensor = state_to_tensor(state);
 
             // random action
             if(args.train && rand_epsilon(gen) < args.epsilon)
                 action = int_to_action(rand_action(gen));
+            else
+            // action from model
+            {
+                torch::Tensor action_tensor = model->act(state_tensor);
+                action = int_to_action(action_tensor[0].item<int>());
+            }
 
             // take action & collect reward
             reward = ale.act(action);
