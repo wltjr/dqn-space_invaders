@@ -274,6 +274,7 @@ void train(args &args,
     int max_episode;
     ale::reward_t max_score;
     std::deque<struct Replay> memory(args.memory);
+    std::shared_ptr<NetImpl> policy;
 
     // initialize random device
     std::random_device rd;
@@ -309,7 +310,6 @@ void train(args &args,
             ale::reward_t reward;
             ale::Action action;
             cv::Mat state;
-            cv::Mat next;
 
             state = scale_crop_screen(ale, state);
 
@@ -321,10 +321,10 @@ void train(args &args,
             reward = ale.act(action);
             total_reward += reward;
 
-            next = scale_crop_screen(ale, next);
-
             if(args.train)
             {
+                cv::Mat next;
+
                 // normalize reward -1, 0, or 1
                 if(reward > 0)
                     reward = 1;
@@ -346,6 +346,9 @@ void train(args &args,
                 // remove last if at capacity
                 if(memory.size() == args.memory)
                     memory.pop_back();
+
+                // next state for memory
+                next = scale_crop_screen(ale, next);
 
                 // add to memory/replay
                 memory.push_back({state, action, reward, next});
