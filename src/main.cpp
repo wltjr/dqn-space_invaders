@@ -424,6 +424,8 @@ int main(int argc, char* argv[])
                   << "Epsilon:       " << args.epsilon << std::endl
                   << "Epsilon Min:   " << args.epsilon_min << std::endl
                   << "Epsilon Decay: " << args.epsilon_decay << std::endl
+                  << "Replay:        " << args.memory << std::endl
+                  << "Replay Min:    " << args.memory_min << std::endl
                   << "Noop:          " << args.noop << std::endl
                   << "Frame Skip:    " << args.skip << std::endl;
 
