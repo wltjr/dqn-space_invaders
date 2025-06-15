@@ -13,6 +13,8 @@
 #include <opencv4/opencv2/opencv.hpp>
 #include <torch/torch.h>
 
+#include "replay_memory.hpp"
+
 #define STRINGIFY(x) STRINGIFY2(x)
 #define STRINGIFY2(x) #x
 
@@ -82,14 +84,6 @@ struct NetImpl : torch::nn::Module
 };
 
 TORCH_MODULE(Net);
-
-struct Replay
-{
-    std::vector<unsigned char> screen_cur;
-    ale::Action action;
-    ale::reward_t reward;
-    std::vector<unsigned char> screen_next;
-};
 
 // command line arguments
 struct args
@@ -299,7 +293,7 @@ void train(args &args,
 {
     int max_episode;
     ale::reward_t max_score;
-    std::deque<struct Replay> memory(args.memory);
+    ReplayMemory memory(args.memory);
 
     // initialize random device
     std::random_device rd;
@@ -357,6 +351,9 @@ void train(args &args,
             if(args.train)
             {
                 cv::Mat next;
+                torch::Tensor action_tensor;
+                torch::Tensor reward_tensor;
+                torch::Tensor next_tensor;
 
                 // normalize reward -1, 0, or 1
                 if(reward > 0)
@@ -376,15 +373,15 @@ void train(args &args,
                 else if(action == ale::Action::PLAYER_A_NOOP)
                     reward = -1;
 
-                // remove last if at capacity
-                if(memory.size() == args.memory)
-                    memory.pop_back();
-
                 // next state for memory
                 next = scale_crop_screen(ale, next);
 
+                action_tensor = torch::tensor(action);
+                reward_tensor = torch::tensor(reward);
+                next_tensor = state_to_tensor(next);
+
                 // add to memory/replay
-                memory.push_back({state, action, reward, next});
+                memory.add({state_tensor, action_tensor, reward_tensor, next_tensor});
 
                 // minimum replay memory size
                 if(memory.size() < args.memory_min)
