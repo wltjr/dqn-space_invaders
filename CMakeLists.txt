@@ -26,7 +26,8 @@ find_package(Torch REQUIRED)
 include_directories(src ${OpenCV_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
 
 # executable binaries - DQN Space Invaders
-add_executable(dqnsi src/main.cpp)
+add_executable(dqnsi src/main.cpp
+                     src/replay_memory.cpp)
 
 # link executable binaries to shared object libraries
 target_link_libraries(dqnsi ale::ale-lib ${OpenCV_LIBS} ${TORCH_LIBRARIES})
