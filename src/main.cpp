@@ -212,6 +212,37 @@ static struct argp argp	 =  { options, parse_opt };
 
 
 /**
+ * @brief Copy policy model network to target model network
+ * 
+ * @param policy model network
+ * @param target model network
+ */
+void clone_network(torch::nn::Module &policy,
+                   torch::nn::Module &target)
+{
+    // enable parameters copying
+    torch::autograd::GradMode::set_enabled(false);
+    auto params = policy.named_parameters(true);
+    auto buffers = policy.named_buffers(true);
+    auto new_params = target.named_parameters();
+
+    for (auto &param : new_params)
+    {
+        auto name = param.key();
+        auto *t = params.find(name);
+        if (t != nullptr)
+            t->copy_(param.value());
+        else
+        {
+            t = buffers.find(name);
+            if (t != nullptr)
+                t->copy_(param.value());
+        }
+    }
+}
+
+
+/**
  * @brief Convert int range 0-5 value to ALE action
  * 
  * @param i integer
