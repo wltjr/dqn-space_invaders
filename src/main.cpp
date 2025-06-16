@@ -30,6 +30,7 @@
 #define EPSILON_DECAY 0.999999   // decay rate for exploration
 #define MEMORY 50000             // replay memory buffer size
 #define MEMORY_MIN 10000         // minimum replay memory buffer size
+#define UPDATE_FREQ 1000         // target network update frequency
 
 const char *argp_program_version = "Version 0.1";
 const char *argp_program_bug_address = "w@wltjr.com";
@@ -100,6 +101,7 @@ struct args
     int memory_min = MEMORY_MIN;
     int noop = NOOP;
     int skip = SKIP;
+    int update_freq = UPDATE_FREQ;
     float alpha = ALPHA;
     float gamma = GAMMA;
     float epsilon = EPSILON;
@@ -130,6 +132,7 @@ static struct argp_option options[] = {
     {"memory",'M',STRINGIFY(MEMORY),0," Replay memory buffer size",2},
     {"noop",'N',STRINGIFY(NOOP),0," Skip initial frames using noop action",2},
     {"skip",'S',STRINGIFY(SKIP),0," Skip frames and repeat actions",2},
+    {"update_freq",'U',STRINGIFY(UPDATE_FREQ),0," Target network update frequency",2},
     {0,0,0,0,"GNU Options:", 3},
     {0,0,0,0,0,0}
 };
@@ -200,6 +203,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
             break;
         case 'S':
             args->skip = arg ? atoi (arg) : SKIP;
+            break;
+        case 'U':
+            args->update_freq = arg ? atoi (arg) : UPDATE_FREQ;
             break;
         default:
             return ARGP_ERR_UNKNOWN;
@@ -424,6 +430,10 @@ void train(args &args,
                 if(memory.size() < args.memory_min)
                     continue;
 
+                // clone policy network to target
+                if (i % args.update_freq == 0)
+                    clone_network(policy, *model);
+
                 // decay epsilon
                 args.epsilon = std::max(args.epsilon_min, 
                                         args.epsilon * args.epsilon_decay);
@@ -497,7 +507,8 @@ int main(int argc, char* argv[])
                   << "Replay:        " << args.memory << std::endl
                   << "Replay Min:    " << args.memory_min << std::endl
                   << "Noop:          " << args.noop << std::endl
-                  << "Frame Skip:    " << args.skip << std::endl;
+                  << "Frame Skip:    " << args.skip << std::endl
+                  << "Update Freq.:  " << args.update_freq << std::endl;
 
         train(args, ale, model);
 
