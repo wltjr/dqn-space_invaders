@@ -294,6 +294,7 @@ void train(args &args,
     int max_episode;
     ale::reward_t max_score;
     ReplayMemory memory(args.memory);
+    NetImpl policy;
 
     // initialize random device
     std::random_device rd;
@@ -340,7 +341,12 @@ void train(args &args,
             else
             // action from model
             {
-                torch::Tensor action_tensor = model->act(state_tensor);
+                torch::Tensor action_tensor;
+
+                if(args.train)
+                    action_tensor = policy.act(state_tensor);
+                else
+                    action_tensor = model->act(state_tensor);
                 action = int_to_action(action_tensor[0].item<int>());
             }
 
