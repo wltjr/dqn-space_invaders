@@ -338,6 +338,8 @@ void train(args &args,
     ale::reward_t max_score;
     ReplayMemory memory(args.memory);
     NetImpl policy;
+    torch::optim::Adam optimizer(policy.parameters(),
+                                 torch::optim::AdamOptions(args.alpha));
 
     // initialize random device
     std::random_device rd;
@@ -403,6 +405,23 @@ void train(args &args,
                 torch::Tensor action_tensor;
                 torch::Tensor reward_tensor;
                 torch::Tensor next_tensor;
+                torch::Tensor states_tensor;
+                torch::Tensor actions_tensor;
+                torch::Tensor rewards_tensor;
+                torch::Tensor state_nexts_tensor;
+                torch::Tensor q_values;
+                torch::Tensor next_target_q_values;
+                torch::Tensor next_q_values;
+                torch::Tensor q_value;
+                torch::Tensor maximum;
+                torch::Tensor next_q_value;
+                torch::Tensor expected_q_value;
+                torch::Tensor loss;
+                std::vector<torch::Tensor> states;
+                std::vector<torch::Tensor> actions;
+                std::vector<torch::Tensor> rewards;
+                std::vector<torch::Tensor> state_nexts;
+                std::vector<ReplayMemory::replay_t> batch;
 
                 // normalize reward -1, 0, or 1
                 if(reward > 0)
@@ -435,6 +454,44 @@ void train(args &args,
                 // minimum replay memory size
                 if(memory.size() < args.memory_min)
                     continue;
+
+                // samples from replay memory
+                batch = memory.sample(args.batch_size);
+
+                // add to individual vectors
+                for (const auto &i : batch)
+                {
+                    states.push_back(i.state);
+                    actions.push_back(i.action);
+                    rewards.push_back(i.reward);
+                    state_nexts.push_back(i.state_next);
+                }
+
+                // null terminate the vectors
+                states_tensor = torch::cat(states, 0);
+                actions_tensor = torch::cat(actions, 0);
+                rewards_tensor = torch::cat(rewards, 0);
+                state_nexts_tensor = torch::cat(state_nexts, 0);
+
+                // get q-values from policy and target
+                q_values = policy.forward(states_tensor);
+                next_target_q_values = model->forward(state_nexts_tensor);
+                next_q_values = policy.forward(state_nexts_tensor);
+
+                // actions type conversion
+                actions_tensor = actions_tensor.to(torch::kInt64);
+
+                // calculate targets for q-learning update 
+                q_value = q_values.gather(1, actions_tensor.unsqueeze(1)).squeeze(1);
+                maximum = std::get<1>(next_q_values.max(1));
+                next_q_value = next_target_q_values.gather(1, maximum.unsqueeze(1)).squeeze(1);
+                expected_q_value = rewards_tensor + args.gamma * next_q_value * (1 - ale.game_over());
+                loss = torch::mse_loss(q_value, expected_q_value);
+
+                // zero gradients, back propagation, & gradient descent
+                optimizer.zero_grad();
+                loss.backward();
+                optimizer.step();
 
                 // clone policy network to target
                 if (i % args.update_freq == 0)
