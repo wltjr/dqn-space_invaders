@@ -327,6 +327,27 @@ torch::Tensor state_to_tensor(cv::Mat &state)
 
 
 /**
+ * @brief Initialize weights in a neural network
+ * 
+ * @param model reference to neural network module
+ */
+void init_weights(torch::nn::Module& model)
+{
+    torch::NoGradGuard no_grad;
+
+    for (auto &p : model.named_parameters()) {
+        std::string y = p.key();
+        auto z = p.value();
+
+        if (y.compare(2, 6, "weight") == 0)
+            z.uniform_(0.0, 1.0);
+        else if (y.compare(2, 4, "bias") == 0)
+            z.uniform_(0.0, 1.0);
+    }
+}
+
+
+/**
  * @brief Train agent using deep q-network
  * 
  * @param args reference to args structure
@@ -558,7 +579,10 @@ int main(int argc, char* argv[])
     if(args.load)
         torch::load(model, args.load_file);
     else
+    {
         model = std::make_shared<NetImpl>();
+        init_weights(*model);
+    }
 
     // must load or train
     if(!args.load && !args.train)
