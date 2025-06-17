@@ -296,7 +296,7 @@ cv::Mat scale_crop_screen(ale::ALEInterface &ale, cv::Mat &state)
 
     // prepare current game screen for opencv
     ale.getScreenGrayscale(screen);
-    orig = cv::Mat(HEIGHT, WIDTH, CV_8UC1, &screen[0]);
+    orig = cv::Mat(HEIGHT, WIDTH, CV_8UC2, &screen[0]);
     scale.height = CROP_HEIGHT;
     scale.width = CROP_WIDTH;
     cv::resize(orig, state, scale);
@@ -316,7 +316,7 @@ torch::Tensor state_to_tensor(cv::Mat &state)
     std::vector<int64_t> ints;
     std::size_t size;
 
-    size = state.total();
+    size = 14112; // 84 x 84 x 2
     ints.reserve(size);
 
     for (long unsigned int i = 0; i < size; i++)
