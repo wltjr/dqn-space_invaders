@@ -48,9 +48,9 @@ const int CROP_WIDTH = 110;
 struct NetImpl : torch::nn::Module
 {
     NetImpl()
-        : conv1(torch::nn::Conv2dOptions(32, 64, 8).stride(4)), // 84 x 84 x 4, 32
+        : conv1(torch::nn::Conv2dOptions(2, 32, 8).stride(4)),  //  2 , 4 x 8
           conv2(torch::nn::Conv2dOptions(32, 64, 4).stride(2)), // 32 , 8 x 8
-          conv3(torch::nn::Conv2dOptions(64, 9, 3).stride(1)), // 64 , 4 x 4
+          conv3(torch::nn::Conv2dOptions(64, 64, 3).stride(1)), // 64 , 4 x 4
           fc1(3136, 512), // 64 x 7 x 7
           fc2(512, ACTIONS)
     {
