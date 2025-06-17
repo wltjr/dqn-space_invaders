@@ -311,13 +311,16 @@ cv::Mat scale_crop_screen(ale::ALEInterface &ale, cv::Mat &state)
  * 
  * @return tensor representation of the ale screen/opencv mat image
  */
-torch::Tensor state_to_tensor(std::vector<unsigned char> state)
+torch::Tensor state_to_tensor(cv::Mat &state)
 {
     std::vector<int64_t> ints;
-    ints.reserve(state.size());
+    std::size_t size;
 
-    for (long unsigned int i = 0; i < state.size(); i++)
-        ints.push_back(int64_t(state[i]));
+    size = state.total();
+    ints.reserve(size);
+
+    for (long unsigned int i = 0; i < size; i++)
+        ints.push_back(int64_t(state.data[i]));
 
     return torch::from_blob(ints.data(),{1, 2, CROP_HEIGHT, CROP_HEIGHT});
 }
