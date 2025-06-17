@@ -334,6 +334,7 @@ void train(args &args,
            ale::ALEInterface &ale,
            std::shared_ptr<NetImpl>  model)
 {
+    int update;
     int max_episode;
     ale::reward_t max_score;
     ReplayMemory memory(args.memory);
@@ -349,9 +350,9 @@ void train(args &args,
 
     auto start = std::chrono::high_resolution_clock::now();
 
-
     max_episode = -1;
     max_score = -1;
+    update = args.update_freq - 1;
 
     for(int i = 0; i < args.episodes ;i++)
     {
@@ -494,8 +495,11 @@ void train(args &args,
                 optimizer.step();
 
                 // clone policy network to target
-                if (i % args.update_freq == 0)
+                if (i == update)
+                {
+                    update += args.update_freq;
                     clone_network(policy, *model);
+                }
 
                 // decay epsilon
                 args.epsilon = std::max(args.epsilon_min, 
