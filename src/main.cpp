@@ -515,7 +515,7 @@ void train(args &args,
                 actions_tensor = actions_tensor.to(torch::kInt64).to(device);
 
                 // calculate targets for q-learning update 
-                q_value = q_values.gather(1, actions_tensor.unsqueeze(1).to(device)).squeeze(1).to(device);
+                q_value = q_values.gather(1, actions_tensor).to(device);
                 maximum = std::get<1>(next_q_values.max(1)).to(device);
                 next_q_value = next_target_q_values.gather(1, maximum.unsqueeze(1).to(device)).squeeze(1).to(device);
                 expected_q_value = (rewards_tensor + args.gamma * next_q_value * (1 - ale.game_over())).to(device);
