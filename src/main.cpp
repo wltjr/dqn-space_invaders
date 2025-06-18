@@ -577,6 +577,13 @@ int main(int argc, char* argv[])
     ale.setBool("sound", args.sound);
     ale.loadROM("./rom/space_invaders.bin");
 
+    // default to CPU
+    torch::Device device = torch::Device(torch::kCPU);
+
+    // switch to GPU if available
+    if(torch::cuda::is_available())
+        device = torch::Device(torch::kCUDA);
+
     // load model
     if(args.load)
         torch::load(model, args.load_file);
@@ -585,6 +592,9 @@ int main(int argc, char* argv[])
         model = std::make_shared<NetImpl>();
         init_weights(*model);
     }
+
+    // set model device
+    model->to(device);
 
     // must load or train
     if(!args.load && !args.train)
