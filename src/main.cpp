@@ -501,9 +501,9 @@ void train(args &args,
                 // convert vectors to tensors
                 states_tensor = torch::cat(states).to(device);
                 actions_tensor = torch::from_blob(actions.data(),
-                                                  { static_cast<int64>(actions.size()) }).to(device);
+                                                  { static_cast<int64>(actions.size()), 1 }).to(device);
                 rewards_tensor = torch::from_blob(rewards.data(),
-                                                  { static_cast<int64>(rewards.size()) }).to(device);
+                                                  { static_cast<int64>(rewards.size()), 1 }).to(device);
                 state_nexts_tensor = torch::cat(state_nexts).to(device);
 
                 // get q-values from policy and target
