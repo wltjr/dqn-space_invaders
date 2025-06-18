@@ -353,10 +353,12 @@ void init_weights(torch::nn::Module& model)
  * @param args reference to args structure
  * @param ale reference to arcade learning environment
  * @param model reference to libtorch model
+ * @param device reference to torch  hardware device
  */
 void train(args &args, 
            ale::ALEInterface &ale,
-           std::shared_ptr<NetImpl>  model)
+           std::shared_ptr<NetImpl>  model,
+           torch::Device &device)
 {
     int update;
     int max_episode;
@@ -377,6 +379,10 @@ void train(args &args,
     max_episode = -1;
     max_score = -1;
     update = args.update_freq - 1;
+
+    // init local policy and set device
+    init_weights(policy);
+    policy.to(device);
 
     for(int i = 0; i < args.episodes ;i++)
     {
@@ -403,7 +409,7 @@ void train(args &args,
             torch::Tensor state_tensor;
 
             state = scale_crop_screen(ale, state);
-            state_tensor = state_to_tensor(state);
+            state_tensor = state_to_tensor(state).to(device);
 
             // random action
             if(args.train && rand_epsilon(gen) < args.epsilon)
@@ -414,9 +420,9 @@ void train(args &args,
                 torch::Tensor action_tensor;
 
                 if(args.train)
-                    action_tensor = policy.act(state_tensor);
+                    action_tensor = policy.act(state_tensor).to(device);
                 else
-                    action_tensor = model->act(state_tensor);
+                    action_tensor = model->act(state_tensor).to(device);
                 action = int_to_action(action_tensor[0].item<int>());
             }
 
@@ -469,9 +475,9 @@ void train(args &args,
                 // next state for memory
                 next = scale_crop_screen(ale, next);
 
-                action_tensor = torch::tensor(action);
-                reward_tensor = torch::tensor(reward);
-                next_tensor = state_to_tensor(next);
+                action_tensor = torch::tensor(action).to(device);
+                reward_tensor = torch::tensor(reward).to(device);
+                next_tensor = state_to_tensor(next).to(device);
 
                 // add to memory/replay
                 memory.add({state_tensor, action_tensor, reward_tensor, next_tensor});
@@ -493,27 +499,27 @@ void train(args &args,
                 }
 
                 // convert vectors to tensors
-                states_tensor = torch::cat(states);
+                states_tensor = torch::cat(states).to(device);
                 actions_tensor = torch::from_blob(actions.data(),
-                                                  { static_cast<int64>(actions.size()) });
+                                                  { static_cast<int64>(actions.size()) }).to(device);
                 rewards_tensor = torch::from_blob(rewards.data(),
-                                                  { static_cast<int64>(rewards.size()) });
-                state_nexts_tensor = torch::cat(state_nexts);
+                                                  { static_cast<int64>(rewards.size()) }).to(device);
+                state_nexts_tensor = torch::cat(state_nexts).to(device);
 
                 // get q-values from policy and target
-                q_values = policy.forward(states_tensor);
-                next_target_q_values = model->forward(state_nexts_tensor);
-                next_q_values = policy.forward(state_nexts_tensor);
+                q_values = policy.forward(states_tensor).to(device);
+                next_target_q_values = model->forward(state_nexts_tensor).to(device);
+                next_q_values = policy.forward(state_nexts_tensor).to(device);
 
                 // actions type conversion
-                actions_tensor = actions_tensor.to(torch::kInt64);
+                actions_tensor = actions_tensor.to(torch::kInt64).to(device);
 
                 // calculate targets for q-learning update 
-                q_value = q_values.gather(1, actions_tensor.unsqueeze(1)).squeeze(1);
-                maximum = std::get<1>(next_q_values.max(1));
-                next_q_value = next_target_q_values.gather(1, maximum.unsqueeze(1)).squeeze(1);
-                expected_q_value = rewards_tensor + args.gamma * next_q_value * (1 - ale.game_over());
-                loss = torch::mse_loss(q_value, expected_q_value);
+                q_value = q_values.gather(1, actions_tensor.unsqueeze(1).to(device)).squeeze(1).to(device);
+                maximum = std::get<1>(next_q_values.max(1)).to(device);
+                next_q_value = next_target_q_values.gather(1, maximum.unsqueeze(1).to(device)).squeeze(1).to(device);
+                expected_q_value = (rewards_tensor + args.gamma * next_q_value * (1 - ale.game_over())).to(device);
+                loss = torch::mse_loss(q_value, expected_q_value).to(device);
 
                 // zero gradients, back propagation, & gradient descent
                 optimizer.zero_grad();
@@ -617,7 +623,7 @@ int main(int argc, char* argv[])
                   << "Update Freq.:  " << args.update_freq << std::endl
                   << "Batch Size:    " << args.batch_size << std::endl;
 
-        train(args, ale, model);
+        train(args, ale, model, device);
 
         // only save after training
         if(args.save)
@@ -628,7 +634,7 @@ int main(int argc, char* argv[])
     if(args.game)
     {
         args.train = false;
-        train(args, ale, model);
+        train(args, ale, model, device);
     }
 
     return 0;
