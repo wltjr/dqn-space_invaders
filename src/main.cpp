@@ -492,11 +492,13 @@ void train(args &args,
                     state_nexts.push_back(i.state_next);
                 }
 
-                // null terminate the vectors
-                states_tensor = torch::cat(states, 0);
-                actions_tensor = torch::cat(actions, 0);
-                rewards_tensor = torch::cat(rewards, 0);
-                state_nexts_tensor = torch::cat(state_nexts, 0);
+                // convert vectors to tensors
+                states_tensor = torch::cat(states);
+                actions_tensor = torch::from_blob(actions.data(),
+                                                  { static_cast<int64>(actions.size()) });
+                rewards_tensor = torch::from_blob(rewards.data(),
+                                                  { static_cast<int64>(rewards.size()) });
+                state_nexts_tensor = torch::cat(state_nexts);
 
                 // get q-values from policy and target
                 q_values = policy.forward(states_tensor);
