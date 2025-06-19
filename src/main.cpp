@@ -435,10 +435,12 @@ void train(args &args,
                 cv::Mat next;
                 torch::Tensor action_tensor;
                 torch::Tensor reward_tensor;
+                torch::Tensor done_tensor;
                 torch::Tensor next_tensor;
                 torch::Tensor states_tensor;
                 torch::Tensor actions_tensor;
                 torch::Tensor rewards_tensor;
+                torch::Tensor dones_tensor;
                 torch::Tensor state_nexts_tensor;
                 torch::Tensor q_values;
                 torch::Tensor next_target_q_values;
@@ -451,6 +453,7 @@ void train(args &args,
                 std::vector<torch::Tensor> states;
                 std::vector<torch::Tensor> actions;
                 std::vector<torch::Tensor> rewards;
+                std::vector<torch::Tensor> dones;
                 std::vector<torch::Tensor> state_nexts;
                 std::vector<ReplayMemory::replay_t> batch;
 
@@ -477,10 +480,11 @@ void train(args &args,
 
                 action_tensor = torch::tensor(action).to(device);
                 reward_tensor = torch::tensor(reward).to(device);
+                done_tensor = torch::tensor(ale.game_over()).to(device);
                 next_tensor = state_to_tensor(next).to(device);
 
                 // add to memory/replay
-                memory.add({state_tensor, action_tensor, reward_tensor, next_tensor});
+                memory.add({state_tensor, action_tensor, reward_tensor, done_tensor, next_tensor});
 
                 // minimum replay memory size
                 if(memory.size() < args.memory_min)
@@ -495,6 +499,7 @@ void train(args &args,
                     states.push_back(i.state);
                     actions.push_back(i.action);
                     rewards.push_back(i.reward);
+                    dones.push_back(i.done);
                     state_nexts.push_back(i.state_next);
                 }
 
@@ -504,6 +509,8 @@ void train(args &args,
                                                   { static_cast<int64>(actions.size()), 1 }).to(device);
                 rewards_tensor = torch::from_blob(rewards.data(),
                                                   { static_cast<int64>(rewards.size()), 1 }).to(device);
+                dones_tensor = torch::from_blob(dones.data(),
+                                                { static_cast<int64>(dones.size()), 1 }).to(device);
                 state_nexts_tensor = torch::cat(state_nexts).to(device);
 
                 // get q-values from policy and target
@@ -518,7 +525,7 @@ void train(args &args,
                 q_value = q_values.gather(1, actions_tensor).to(device);
                 maximum = std::get<1>(next_q_values.max(1)).to(device);
                 next_q_value = next_target_q_values.gather(1, maximum.unsqueeze(1).to(device)).squeeze(1).to(device);
-                expected_q_value = (rewards_tensor + args.gamma * next_q_value * (1 - ale.game_over())).to(device);
+                expected_q_value = (rewards_tensor + args.gamma * next_q_value * (1 - dones_tensor)).to(device);
                 loss = torch::mse_loss(q_value, expected_q_value).to(device);
 
                 // zero gradients, back propagation, & gradient descent
