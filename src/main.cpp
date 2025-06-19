@@ -523,8 +523,8 @@ void train(args &args,
 
                 // calculate targets for q-learning update 
                 q_value = q_values.gather(1, actions_tensor).to(device);
-                maximum = std::get<1>(next_q_values.max(1)).to(device);
-                next_q_value = next_target_q_values.gather(1, maximum.unsqueeze(1).to(device)).squeeze(1).to(device);
+                maximum = std::get<1>(next_q_values.max(1)).unsqueeze(1).to(device);
+                next_q_value = next_target_q_values.gather(1, maximum.to(device)).to(device);
                 expected_q_value = (rewards_tensor + args.gamma * next_q_value * (1 - dones_tensor)).to(device);
                 loss = torch::mse_loss(q_value, expected_q_value).to(device);
 
