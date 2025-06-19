@@ -11,6 +11,7 @@ class ReplayMemory
             torch::Tensor state;
             torch::Tensor action;
             torch::Tensor reward;
+            torch::Tensor done;
             torch::Tensor state_next;
         } typedef replay_t;
 
