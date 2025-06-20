@@ -527,6 +527,7 @@ void train(args &args,
                 next_q_value = next_target_q_values.gather(1, maximum.to(device)).to(device);
                 expected_q_value = (rewards_tensor + args.gamma * next_q_value * (1 - dones_tensor)).to(device);
                 loss = torch::mse_loss(q_value, expected_q_value).to(device);
+                loss.requires_grad_(true);
 
                 // zero gradients, back propagation, & gradient descent
                 optimizer.zero_grad();
