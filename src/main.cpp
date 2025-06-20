@@ -546,6 +546,10 @@ void train(args &args,
             }
         }
 
+        // final clone of trained policy to target model
+        if(args.train)
+            clone_network(policy, *model);
+
         // track max episode & score
         if(total_reward > max_score)
         {
