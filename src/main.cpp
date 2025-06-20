@@ -597,14 +597,13 @@ int main(int argc, char* argv[])
     if(torch::cuda::is_available())
         device = torch::Device(torch::kCUDA);
 
+    model = std::make_shared<NetImpl>();
+
     // load model
     if(args.load)
         torch::load(model, args.load_file);
     else
-    {
-        model = std::make_shared<NetImpl>();
         init_weights(*model);
-    }
 
     // set model device
     model->to(device);
