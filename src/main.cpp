@@ -389,8 +389,10 @@ void train(args &args,
         ale::reward_t total_reward;
         int steps;
         int lives;
+        double loss_episode;
 
         lives = ale.lives();
+        loss_episode = 0.0;
         steps = 0;
         total_reward = 0;
 
@@ -528,6 +530,7 @@ void train(args &args,
                 expected_q_value = (rewards_tensor + args.gamma * next_q_value * (1 - dones_tensor)).to(device);
                 loss = torch::mse_loss(q_value, expected_q_value).to(device);
                 loss.requires_grad_(true);
+                loss_episode = loss.item().to<double>();
 
                 // zero gradients, back propagation, & gradient descent
                 optimizer.zero_grad();
@@ -562,8 +565,8 @@ void train(args &args,
         if(args.png)
             ale.saveScreenPNG(std::format("episode-{}.png", i));
 
-        std::cout << std::format("Episode {} score: {} steps: {} epsilon: {}",
-                                 i, total_reward, steps, args.epsilon)
+        std::cout << std::format("Episode {} score: {} steps: {} epsilon: {} loss: {}",
+                                 i, total_reward, steps, args.epsilon, loss_episode)
                   << std::endl;
         ale.reset_game();
     }
