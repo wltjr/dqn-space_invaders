@@ -525,9 +525,6 @@ void train(args &args,
                 next_target_q_values = model->forward(state_nexts_tensor).to(device);
                 next_q_values = policy.forward(state_nexts_tensor).to(device);
 
-                // actions type conversion
-                actions_tensor = actions_tensor.to(torch::kInt64).to(device);
-
                 // calculate targets for q-learning update 
                 q_value = q_values.gather(1, actions_tensor).to(device);
                 maximum = std::get<1>(next_q_values.max(1)).unsqueeze(1).to(device);
