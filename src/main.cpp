@@ -452,10 +452,11 @@ void train(args &args,
                 torch::Tensor next_q_value;
                 torch::Tensor expected_q_value;
                 torch::Tensor loss;
+                torch::TensorOptions options;
                 std::vector<torch::Tensor> states;
-                std::vector<torch::Tensor> actions;
-                std::vector<torch::Tensor> rewards;
-                std::vector<torch::Tensor> dones;
+                std::vector<int64_t> actions;
+                std::vector<int64_t> rewards;
+                std::vector<int64_t> dones;
                 std::vector<torch::Tensor> state_nexts;
                 std::vector<ReplayMemory::replay_t> batch;
 
@@ -480,9 +481,10 @@ void train(args &args,
                 // next state for memory
                 next = scale_crop_screen(ale, next);
 
-                action_tensor = torch::tensor(action).to(device);
-                reward_tensor = torch::tensor(reward).to(device);
-                done_tensor = torch::tensor(ale.game_over()).to(device);
+                options = torch::TensorOptions().dtype(torch::kInt64);
+                action_tensor = torch::tensor(action, options).to(device);
+                reward_tensor = torch::tensor(reward, options).to(device);
+                done_tensor = torch::tensor(ale.game_over(), options).to(device);
                 next_tensor = state_to_tensor(next).to(device);
 
                 // add to memory/replay
@@ -499,20 +501,23 @@ void train(args &args,
                 for (const auto &i : batch)
                 {
                     states.push_back(i.state);
-                    actions.push_back(i.action);
-                    rewards.push_back(i.reward);
-                    dones.push_back(i.done);
+                    actions.push_back(i.action.item().to<int64_t>());
+                    rewards.push_back(i.reward.item().to<int64_t>());
+                    dones.push_back(i.done.item().to<int64_t>());
                     state_nexts.push_back(i.state_next);
                 }
 
                 // convert vectors to tensors
                 states_tensor = torch::cat(states).to(device);
                 actions_tensor = torch::from_blob(actions.data(),
-                                                  { static_cast<int64>(actions.size()), 1 }).to(device);
+                                                  { static_cast<int64_t>(actions.size()), 1 },
+                                                  options).to(device);
                 rewards_tensor = torch::from_blob(rewards.data(),
-                                                  { static_cast<int64>(rewards.size()), 1 }).to(device);
+                                                  { static_cast<int64_t>(rewards.size()), 1 },
+                                                  options).to(device);
                 dones_tensor = torch::from_blob(dones.data(),
-                                                { static_cast<int64>(dones.size()), 1 }).to(device);
+                                                { static_cast<int64_t>(dones.size()), 1 },
+                                                options).to(device);
                 state_nexts_tensor = torch::cat(state_nexts).to(device);
 
                 // get q-values from policy and target
