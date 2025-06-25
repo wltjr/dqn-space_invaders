@@ -406,7 +406,7 @@ void train(args &args,
                 ale.act(ale::Action::PLAYER_A_NOOP);
         }
 
-        for(; !ale.game_over(); steps++)
+        for(; !ale.game_over() && lives > 0; steps++)
         {
             ale::reward_t reward;
             ale::Action action;
@@ -475,7 +475,7 @@ void train(args &args,
                 if(ale.lives() < lives)
                 {
                     reward = -10;
-                    lives = ale.lives();
+                    lives = 0; // ale.lives();
                 }
                 // penalty for noop
                 else if(action == ale::Action::PLAYER_A_NOOP)
