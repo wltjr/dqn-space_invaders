@@ -313,16 +313,19 @@ cv::Mat scale_crop_screen(ale::ALEInterface &ale, cv::Mat &state)
  */
 torch::Tensor state_to_tensor(cv::Mat &state)
 {
-    std::vector<int64_t> ints;
+    std::vector<float> pixels;
     std::size_t size;
+    cv::Size state_size;
 
-    size = 7056; // 84 x 84
-    ints.reserve(size);
+    state_size = state.size();
+    size = (state_size.width * state_size.height); // 84 x 84
+    pixels.reserve(size);
 
     for (long unsigned int i = 0; i < size; i++)
-        ints.push_back(int64_t(state.data[i]));
+        pixels.emplace_back(state.data[i]);
 
-    return torch::from_blob(ints.data(),{1, 1, CROP_HEIGHT, CROP_HEIGHT});
+    return torch::from_blob(pixels.data(),
+                            {1, 1, state_size.width, state_size.height});
 }
 
 
