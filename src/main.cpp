@@ -570,9 +570,13 @@ void train(args &args,
         if(args.png)
             ale.saveScreenPNG(std::format("episode-{}.png", i));
 
-        std::cout << std::format("Episode {} score: {} steps: {} epsilon: {} loss: {}",
-                                 i, total_reward, steps, args.epsilon, loss_episode)
-                  << std::endl;
+        std::cout << std::format("Episode {} score: {} steps: {}",
+                                 i, total_reward, steps);
+        // output only when training
+        if(args.train)
+            std::cout << std::format(" epsilon: {} loss: {}",
+                                     args.epsilon, loss_episode);
+        std::cout << std::endl;
         ale.reset_game();
     }
 
