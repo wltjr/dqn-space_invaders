@@ -48,7 +48,7 @@ const int CROP_WIDTH = 110;
 struct NetImpl : torch::nn::Module
 {
     NetImpl()
-        : conv1(torch::nn::Conv2dOptions(2, 32, 8).stride(4)),  //  2 , 4 x 8
+        : conv1(torch::nn::Conv2dOptions(1, 32, 8).stride(4)),  //  1 , 4 x 8
           conv2(torch::nn::Conv2dOptions(32, 64, 4).stride(2)), // 32 , 8 x 8
           conv3(torch::nn::Conv2dOptions(64, 64, 3).stride(1)), // 64 , 4 x 4
           fc1(3136, 512), // 64 x 7 x 7
@@ -296,7 +296,7 @@ cv::Mat scale_crop_screen(ale::ALEInterface &ale, cv::Mat &state)
 
     // prepare current game screen for opencv
     ale.getScreenGrayscale(screen);
-    orig = cv::Mat(HEIGHT, WIDTH, CV_8UC2, &screen[0]);
+    orig = cv::Mat(HEIGHT, WIDTH, CV_8UC1, &screen[0]);
     scale.height = CROP_HEIGHT;
     scale.width = CROP_WIDTH;
     cv::resize(orig, state, scale);
@@ -316,13 +316,13 @@ torch::Tensor state_to_tensor(cv::Mat &state)
     std::vector<int64_t> ints;
     std::size_t size;
 
-    size = 14112; // 84 x 84 x 2
+    size = 7056; // 84 x 84
     ints.reserve(size);
 
     for (long unsigned int i = 0; i < size; i++)
         ints.push_back(int64_t(state.data[i]));
 
-    return torch::from_blob(ints.data(),{1, 2, CROP_HEIGHT, CROP_HEIGHT});
+    return torch::from_blob(ints.data(),{1, 1, CROP_HEIGHT, CROP_HEIGHT});
 }
 
 
