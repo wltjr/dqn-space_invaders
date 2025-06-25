@@ -533,7 +533,7 @@ void train(args &args,
                 maximum = std::get<1>(next_q_values.max(1)).unsqueeze(1).to(device);
                 next_q_value = next_target_q_values.gather(1, maximum).to(device);
                 expected_q_value = (rewards_tensor + args.gamma * next_q_value * (1 - dones_tensor)).to(device);
-                loss = torch::mse_loss(q_value, expected_q_value).to(device);
+                loss = torch::smooth_l1_loss(q_value, expected_q_value).to(device);
                 loss.requires_grad_(true);
                 loss_episode = loss.item().to<double>();
 
