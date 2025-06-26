@@ -32,6 +32,7 @@
 #define MEMORY_MIN 10000         // minimum replay memory buffer size
 #define UPDATE_FREQ 1000         // target network update frequency
 #define BATCH_SIZE 32            // minibatch sample size
+#define HISTORY_LEN 4             // agent history length
 
 const char *argp_program_version = "Version 0.1";
 const char *argp_program_bug_address = "w@wltjr.com";
@@ -99,6 +100,7 @@ struct args
     bool train = false;
     int batch_size = BATCH_SIZE;
     int episodes = EPISODES;
+    int history_len = HISTORY_LEN;
     int memory = MEMORY;
     int memory_min = MEMORY_MIN;
     int noop = NOOP;
@@ -136,6 +138,7 @@ static struct argp_option options[] = {
     {"skip",'S',STRINGIFY(SKIP),0," Skip frames and repeat actions",2},
     {"update_freq",'U',STRINGIFY(UPDATE_FREQ),0," Target network update frequency",2},
     {"batch_size",'B',STRINGIFY(BATCH_SIZE),0," Minibatch sample size for SGD update",2},
+    {"history",'H',STRINGIFY(HISTORY_LEN),0," Number of frames used as network input",2},
     {0,0,0,0,"GNU Options:", 3},
     {0,0,0,0,0,0}
 };
@@ -194,6 +197,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
             break;
         case 'F':
             args->epsilon_min = arg ? atof (arg) : EPSILON_MIN;
+            break;
+        case 'H':
+            args->history_len = arg ? atoi (arg) : HISTORY_LEN;
             break;
         case 'K':
             args->memory_min = arg ? atoi (arg) : MEMORY_MIN;
@@ -644,7 +650,8 @@ int main(int argc, char* argv[])
                   << "Noop:          " << args.noop << std::endl
                   << "Frame Skip:    " << args.skip << std::endl
                   << "Update Freq.:  " << args.update_freq << std::endl
-                  << "Batch Size:    " << args.batch_size << std::endl;
+                  << "Batch Size:    " << args.batch_size << std::endl
+                  << "History Length:" << args.history_len << std::endl;
 
         train(args, ale, model, device);
 
