@@ -330,8 +330,53 @@ torch::Tensor state_to_tensor(cv::Mat &state)
     for (long unsigned int i = 0; i < size; i++)
         pixels.emplace_back(state.data[i]);
 
-    return torch::from_blob(pixels.data(),
-                            {1, 1, state_size.width, state_size.height});
+    return torch::from_blob(pixels.data(), {state_size.width, state_size.height});
+}
+
+
+/**
+ * @brief Stack state frame tensors into groups based on history length
+ * 
+ * @param history_len reference to history length
+ * @param states reference to a vector of state frame tensors
+ * @param device reference to torch  hardware device
+ * 
+ * @return vector of state frame tensors in groups
+ */
+torch::Tensor stack_state_tensors(int &history_len,
+                                  std::vector<torch::Tensor> &states,
+                                  torch::Device &device)
+{
+    int count;
+    std::vector<float> pixels;
+    std::vector<torch::Tensor> frames;
+
+    count = 1;
+    frames.reserve(states.size() /  history_len);
+
+    for (const auto &state : states)
+    {
+        c10::IntArrayRef state_size;
+
+        state_size = state.sizes();
+        pixels.reserve(state_size[0] * state_size[1]);
+
+        for (int s = 0; s < 2; s++)
+            for (long int i = 0; i < state_size[s]; i++)
+                pixels.push_back(state[s][i].item<float>());
+
+        if(count == history_len)
+        {
+            frames.push_back(torch::from_blob(pixels.data(),
+                             {1, history_len, state_size[0], state_size[1]}));
+            pixels.clear();
+            count = 0;
+        }
+
+        count++;
+    }
+
+    return torch::cat(frames).to(device);
 }
 
 
@@ -373,7 +418,7 @@ void train(args &args,
     int max_episode;
     ale::reward_t max_score;
     ReplayMemory memory(args.memory);
-    NetImpl policy(1, ACTIONS);
+    NetImpl policy(args.history_len, ACTIONS);
     torch::optim::Adam optimizer(policy.parameters(),
                                  torch::optim::AdamOptions(args.alpha));
 
@@ -509,15 +554,26 @@ void train(args &args,
                 // add to individual vectors
                 for (const auto &i : batch)
                 {
-                    states.push_back(i.state);
                     actions.push_back(i.action.item().to<int64_t>());
                     rewards.push_back(i.reward.item().to<int64_t>());
                     dones.push_back(i.done.item().to<int64_t>());
+                }
+
+                // samples from replay memory
+                batch = memory.sample(args.batch_size * args.history_len);
+
+                // add to individual vectors
+                for (const auto &i : batch)
+                {
+                    states.push_back(i.state);
                     state_nexts.push_back(i.state_next);
                 }
 
+                // stack frames for processing
+                states_tensor = stack_state_tensors(args.history_len, states, device);
+                state_nexts_tensor = stack_state_tensors(args.history_len, state_nexts, device);
+
                 // convert vectors to tensors
-                states_tensor = torch::cat(states).to(device);
                 actions_tensor = torch::from_blob(actions.data(),
                                                   { static_cast<int64_t>(actions.size()), 1 },
                                                   options).to(device);
@@ -527,7 +583,6 @@ void train(args &args,
                 dones_tensor = torch::from_blob(dones.data(),
                                                 { static_cast<int64_t>(dones.size()), 1 },
                                                 options).to(device);
-                state_nexts_tensor = torch::cat(state_nexts).to(device);
 
                 // get q-values from policy and target
                 q_values = policy.forward(states_tensor).to(device);
@@ -620,7 +675,7 @@ int main(int argc, char* argv[])
     if(torch::cuda::is_available())
         device = torch::Device(torch::kCUDA);
 
-    model = std::make_shared<NetImpl>(1, ACTIONS);
+    model = std::make_shared<NetImpl>(args.history_len, ACTIONS);
 
     // load model
     if(args.load)
