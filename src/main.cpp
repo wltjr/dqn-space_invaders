@@ -434,9 +434,16 @@ void train(args &args,
     max_score = -1;
     update = args.update_freq - 1;
 
-    // init local policy and set device
-    init_weights(policy);
-    policy.to(device);
+    if(args.train)
+    {
+        // init local policy and set device
+        init_weights(policy);
+        policy.to(device);
+        policy.train();
+        model->train();
+    }
+    else
+        model->eval();
 
     for(int i = 0; i < args.episodes ;i++)
     {
