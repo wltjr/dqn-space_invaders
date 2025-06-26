@@ -47,12 +47,12 @@ const int CROP_WIDTH = 110;
 
 struct NetImpl : torch::nn::Module
 {
-    NetImpl()
-        : conv1(torch::nn::Conv2dOptions(1, 32, 8).stride(4)),  //  1 , 4 x 8
+    NetImpl(int64_t frames, int64_t actions)
+        : conv1(torch::nn::Conv2dOptions(frames, 32, 8).stride(4)), //  N , 4 x 8
           conv2(torch::nn::Conv2dOptions(32, 64, 4).stride(2)), // 32 , 8 x 8
           conv3(torch::nn::Conv2dOptions(64, 64, 3).stride(1)), // 64 , 4 x 4
           fc1(3136, 512), // 64 x 7 x 7
-          fc2(512, ACTIONS)
+          fc2(512, actions)
     {
         register_module("conv1", conv1);
         register_module("conv2", conv2);
@@ -367,7 +367,7 @@ void train(args &args,
     int max_episode;
     ale::reward_t max_score;
     ReplayMemory memory(args.memory);
-    NetImpl policy;
+    NetImpl policy(1, ACTIONS);
     torch::optim::Adam optimizer(policy.parameters(),
                                  torch::optim::AdamOptions(args.alpha));
 
@@ -614,7 +614,7 @@ int main(int argc, char* argv[])
     if(torch::cuda::is_available())
         device = torch::Device(torch::kCUDA);
 
-    model = std::make_shared<NetImpl>();
+    model = std::make_shared<NetImpl>(1, ACTIONS);
 
     // load model
     if(args.load)
