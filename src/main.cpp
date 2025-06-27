@@ -495,6 +495,7 @@ void train(args &args,
 
             if(args.train)
             {
+                int size;
                 cv::Mat next;
                 torch::Tensor action_tensor;
                 torch::Tensor reward_tensor;
@@ -557,23 +558,29 @@ void train(args &args,
 
                 // samples from replay memory
                 batch = memory.sample(args.batch_size);
+                actions.reserve(args.batch_size);
+                rewards.reserve(args.batch_size);
+                dones.reserve(args.batch_size);
 
                 // add to individual vectors
                 for (const auto &i : batch)
                 {
-                    actions.push_back(i.action.item().to<int64_t>());
-                    rewards.push_back(i.reward.item().to<int64_t>());
-                    dones.push_back(i.done.item().to<int64_t>());
+                    actions.emplace_back(i.action.item().to<int64_t>());
+                    rewards.emplace_back(i.reward.item().to<int64_t>());
+                    dones.emplace_back(i.done.item().to<int64_t>());
                 }
 
                 // samples from replay memory
-                batch = memory.sample(args.batch_size * args.history_len);
+                size = args.batch_size * args.history_len;
+                batch = memory.sample(size);
+                states.reserve(size);
+                state_nexts.reserve(size);
 
                 // add to individual vectors
                 for (const auto &i : batch)
                 {
-                    states.push_back(i.state);
-                    state_nexts.push_back(i.state_next);
+                    states.emplace_back(i.state);
+                    state_nexts.emplace_back(i.state_next);
                 }
 
                 // stack frames for processing
