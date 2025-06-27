@@ -363,12 +363,12 @@ torch::Tensor stack_state_tensors(int &history_len,
 
         for (int s = 0; s < 2; s++)
             for (long int i = 0; i < state_size[s]; i++)
-                pixels.push_back(state[s][i].item<float>());
+                pixels.emplace_back(state[s][i].item<float>());
 
         if(count == history_len)
         {
-            frames.push_back(torch::from_blob(pixels.data(),
-                             {1, history_len, state_size[0], state_size[1]}));
+            frames.emplace_back(torch::from_blob(pixels.data(),
+                                {1, history_len, state_size[0], state_size[1]}));
             pixels.clear();
             count = 0;
         }
