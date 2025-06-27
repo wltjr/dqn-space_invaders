@@ -328,7 +328,7 @@ torch::Tensor state_to_tensor(cv::Mat &state)
     pixels.reserve(size);
 
     for (long unsigned int i = 0; i < size; i++)
-        pixels.emplace_back(state.data[i]);
+        pixels.emplace_back(state.data[i] / 255.0);
 
     return torch::from_blob(pixels.data(), {state_size.width, state_size.height});
 }
