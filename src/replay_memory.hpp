@@ -15,7 +15,6 @@ class ReplayMemory
             torch::Tensor state_next;
         } typedef replay_t;
 
-    public:
         /**
          * @brief Construct a new ReplayMemory object, empty/unused
          */
