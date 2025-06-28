@@ -14,6 +14,7 @@
 #include <torch/torch.h>
 
 #include "replay_memory.hpp"
+#include "state_history.hpp"
 
 #define STRINGIFY(x) STRINGIFY2(x)
 #define STRINGIFY2(x) #x
@@ -451,6 +452,7 @@ void train(args &args,
         int steps;
         int lives;
         double loss_episode;
+        StateHistory state_history(args.history_len);
 
         lives = ale.lives();
         loss_episode = 0.0;
@@ -459,9 +461,24 @@ void train(args &args,
 
         if(args.train)
         {
+            int skip;
+
+            // reduce skips for history priming
+            skip = args.noop - args.history_len;
+
             // skip initial frames with noop action
-            for(; steps < args.noop; steps++)
+            for(; steps < skip; steps++)
                 ale.act(ale::Action::PLAYER_A_NOOP);
+        }
+
+        // prime history less one for first state in next loop
+        for(int i = 1; i < args.history_len; i++, steps++)
+        {
+            cv::Mat state;
+
+            ale.act(ale::Action::PLAYER_A_NOOP);
+            state = scale_crop_screen(ale, state);
+            state_history.add(state);
         }
 
         for(; !ale.game_over() && lives > 0; steps++)
@@ -472,6 +489,7 @@ void train(args &args,
             torch::Tensor state_tensor;
 
             state = scale_crop_screen(ale, state);
+            state_history.add(state);
             state_tensor = state_to_tensor(state).to(device);
 
             // random action
@@ -481,11 +499,13 @@ void train(args &args,
             // action from model
             {
                 torch::Tensor action_tensor;
+                torch::Tensor states_tensor;
 
+                states_tensor = state_history.getStates().to(device);
                 if(args.train)
-                    action_tensor = policy.act(state_tensor).to(device);
+                    action_tensor = policy.act(states_tensor).to(device);
                 else
-                    action_tensor = model->act(state_tensor).to(device);
+                    action_tensor = model->act(states_tensor).to(device);
                 action = int_to_action(action_tensor[0].item<int>());
             }
 
