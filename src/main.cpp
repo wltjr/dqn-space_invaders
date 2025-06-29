@@ -571,30 +571,30 @@ void train(args &args,
                     continue;
 
                 // samples from replay memory
-                batch = memory.sample(args.batch_size);
+                size = args.batch_size * args.history_len;
+                batch = memory.sample(size);
+                states.reserve(size);
+                state_nexts.reserve(size);
                 actions.reserve(args.batch_size);
                 rewards.reserve(args.batch_size);
                 dones.reserve(args.batch_size);
 
                 // add to individual vectors
-                for (const auto &i : batch)
+                for (int a = 1; const auto &b : batch)
                 {
-                    actions.emplace_back(i.action.item().to<int64_t>());
-                    rewards.emplace_back(i.reward.item().to<int64_t>());
-                    dones.emplace_back(i.done.item().to<int64_t>());
-                }
+                    // add args.batch_size * args.history_len states
+                    states.emplace_back(b.state);
+                    state_nexts.emplace_back(b.state_next);
 
-                // samples from replay memory
-                size = args.batch_size * args.history_len;
-                batch = memory.sample(size);
-                states.reserve(size);
-                state_nexts.reserve(size);
+                    // add args.batch_size the rest
+                    if (a % args.history_len == 0)
+                    {
+                        actions.emplace_back(b.action.item().to<int64_t>());
+                        rewards.emplace_back(b.reward.item().to<int64_t>());
+                        dones.emplace_back(b.done.item().to<int64_t>());
+                    }
 
-                // add to individual vectors
-                for (const auto &i : batch)
-                {
-                    states.emplace_back(i.state);
-                    state_nexts.emplace_back(i.state_next);
+                    a++;
                 }
 
                 // stack frames for processing
