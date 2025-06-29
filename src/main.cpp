@@ -331,7 +331,7 @@ torch::Tensor state_to_tensor(cv::Mat &state)
     for (long unsigned int i = 0; i < size; i++)
         pixels.emplace_back(state.data[i] / 255.0);
 
-    return torch::from_blob(pixels.data(), {state_size.width, state_size.height});
+    return torch::from_blob(pixels.data(), {1, state_size.width, state_size.height}).clone();
 }
 
 
@@ -349,28 +349,22 @@ torch::Tensor stack_state_tensors(int &history_len,
                                   torch::Device &device)
 {
     int count;
-    std::vector<float> pixels;
+    c10::IntArrayRef state_size;
     std::vector<torch::Tensor> frames;
+    std::vector<torch::Tensor> state_frames;
 
     count = 1;
     frames.reserve(states.size() /  history_len);
+    state_size = states[0].sizes();
 
     for (const auto &state : states)
     {
-        c10::IntArrayRef state_size;
-
-        state_size = state.sizes();
-        pixels.reserve(state_size[0] * state_size[1]);
-
-        for (int s = 0; s < 2; s++)
-            for (long int i = 0; i < state_size[s]; i++)
-                pixels.emplace_back(state[s][i].item<float>());
+        state_frames.emplace_back(state);
 
         if(count == history_len)
         {
-            frames.emplace_back(torch::from_blob(pixels.data(),
-                                {1, history_len, state_size[0], state_size[1]}));
-            pixels.clear();
+            frames.emplace_back(torch::cat(state_frames).unsqueeze(0).to(device));
+            state_frames.clear();
             count = 0;
         }
 
