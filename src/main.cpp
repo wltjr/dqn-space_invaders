@@ -687,6 +687,11 @@ int main(int argc, char* argv[])
     // parse command line options
     argp_parse (&argp, argc, argv, 0, 0, &args);
 
+    // output date and time
+    auto const now = std::chrono::system_clock::now();
+    std::time_t time = std::chrono::system_clock::to_time_t(now);
+    std::cout << std::ctime(&time);
+
     // initialize Arcade Learning Environment
     ale::ALEInterface ale;
 
