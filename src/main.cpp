@@ -33,7 +33,7 @@
 #define MEMORY_MIN 10000         // minimum replay memory buffer size
 #define UPDATE_FREQ 1000         // target network update frequency
 #define BATCH_SIZE 32            // minibatch sample size
-#define HISTORY_LEN 4             // agent history length
+#define HISTORY_SIZE 4           // agent history size
 
 const char *argp_program_version = "Version 0.1";
 const char *argp_program_bug_address = "w@wltjr.com";
@@ -101,7 +101,7 @@ struct args
     bool train = false;
     int batch_size = BATCH_SIZE;
     int episodes = EPISODES;
-    int history_len = HISTORY_LEN;
+    int history_size = HISTORY_SIZE;
     int memory = MEMORY;
     int memory_min = MEMORY_MIN;
     int noop = NOOP;
@@ -139,7 +139,7 @@ static struct argp_option options[] = {
     {"skip",'S',STRINGIFY(SKIP),0," Skip frames and repeat actions",2},
     {"update_freq",'U',STRINGIFY(UPDATE_FREQ),0," Target network update frequency",2},
     {"batch_size",'B',STRINGIFY(BATCH_SIZE),0," Minibatch sample size for SGD update",2},
-    {"history",'H',STRINGIFY(HISTORY_LEN),0," Number of frames used as network input",2},
+    {"history",'H',STRINGIFY(HISTORY_SIZE),0," Number of frames used as network input",2},
     {0,0,0,0,"GNU Options:", 3},
     {0,0,0,0,0,0}
 };
@@ -200,7 +200,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
             args->epsilon_min = arg ? atof (arg) : EPSILON_MIN;
             break;
         case 'H':
-            args->history_len = arg ? atoi (arg) : HISTORY_LEN;
+            args->history_size = arg ? atoi (arg) : HISTORY_SIZE;
             break;
         case 'K':
             args->memory_min = arg ? atoi (arg) : MEMORY_MIN;
@@ -338,13 +338,13 @@ torch::Tensor state_to_tensor(cv::Mat &state)
 /**
  * @brief Stack state frame tensors into groups based on history length
  * 
- * @param history_len reference to history length
+ * @param history_size reference to history length
  * @param states reference to a vector of state frame tensors
  * @param device reference to torch  hardware device
  * 
  * @return vector of state frame tensors in groups
  */
-torch::Tensor stack_state_tensors(int &history_len,
+torch::Tensor stack_state_tensors(int &history_size,
                                   std::vector<torch::Tensor> &states,
                                   torch::Device &device)
 {
@@ -354,14 +354,14 @@ torch::Tensor stack_state_tensors(int &history_len,
     std::vector<torch::Tensor> state_frames;
 
     count = 1;
-    frames.reserve(states.size() /  history_len);
+    frames.reserve(states.size() /  history_size);
     state_size = states[0].sizes();
 
     for (const auto &state : states)
     {
         state_frames.emplace_back(state);
 
-        if(count == history_len)
+        if(count == history_size)
         {
             frames.emplace_back(torch::cat(state_frames).unsqueeze(0).to(device));
             state_frames.clear();
@@ -413,7 +413,7 @@ void train(args &args,
     int max_episode;
     ale::reward_t max_score;
     ReplayMemory memory(args.memory);
-    NetImpl policy(args.history_len, ACTIONS);
+    NetImpl policy(args.history_size, ACTIONS);
     torch::optim::Adam optimizer(policy.parameters(),
                                  torch::optim::AdamOptions(args.alpha));
 
@@ -446,7 +446,7 @@ void train(args &args,
         int steps;
         int lives;
         double loss_episode;
-        StateHistory state_history(args.history_len);
+        StateHistory state_history(args.history_size);
 
         lives = ale.lives();
         loss_episode = 0.0;
@@ -458,7 +458,7 @@ void train(args &args,
             int skip;
 
             // reduce skips for history priming
-            skip = args.noop - args.history_len;
+            skip = args.noop - args.history_size;
 
             // skip initial frames with noop action
             for(; steps < skip; steps++)
@@ -466,7 +466,7 @@ void train(args &args,
         }
 
         // prime history less one for first state in next loop
-        for(int i = 1; i < args.history_len; i++, steps++)
+        for(int i = 1; i < args.history_size; i++, steps++)
         {
             cv::Mat state;
 
@@ -571,7 +571,7 @@ void train(args &args,
                     continue;
 
                 // samples from replay memory
-                size = args.batch_size * args.history_len;
+                size = args.batch_size * args.history_size;
                 batch = memory.sample(size);
                 states.reserve(size);
                 state_nexts.reserve(size);
@@ -582,12 +582,12 @@ void train(args &args,
                 // add to individual vectors
                 for (int a = 1; const auto &b : batch)
                 {
-                    // add args.batch_size * args.history_len states
+                    // add args.batch_size * args.history_size states
                     states.emplace_back(b.state);
                     state_nexts.emplace_back(b.state_next);
 
                     // add args.batch_size the rest
-                    if (a % args.history_len == 0)
+                    if (a % args.history_size == 0)
                     {
                         actions.emplace_back(b.action.item().to<int64_t>());
                         rewards.emplace_back(b.reward.item().to<int64_t>());
@@ -598,8 +598,8 @@ void train(args &args,
                 }
 
                 // stack frames for processing
-                states_tensor = stack_state_tensors(args.history_len, states, device);
-                state_nexts_tensor = stack_state_tensors(args.history_len, state_nexts, device);
+                states_tensor = stack_state_tensors(args.history_size, states, device);
+                state_nexts_tensor = stack_state_tensors(args.history_size, state_nexts, device);
 
                 // convert vectors to tensors
                 actions_tensor = torch::from_blob(actions.data(),
@@ -708,7 +708,7 @@ int main(int argc, char* argv[])
     if(torch::cuda::is_available())
         device = torch::Device(torch::kCUDA);
 
-    model = std::make_shared<NetImpl>(args.history_len, ACTIONS);
+    model = std::make_shared<NetImpl>(args.history_size, ACTIONS);
 
     // load model
     if(args.load)
@@ -739,7 +739,7 @@ int main(int argc, char* argv[])
                   << "Frame Skip:    " << args.skip << std::endl
                   << "Update Freq.:  " << args.update_freq << std::endl
                   << "Batch Size:    " << args.batch_size << std::endl
-                  << "History Length:" << args.history_len << std::endl;
+                  << "History Size:  " << args.history_size << std::endl;
 
         train(args, ale, model, device);
 
