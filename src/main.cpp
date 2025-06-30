@@ -455,11 +455,13 @@ void train(args &args,
         ale::reward_t total_reward;
         int steps;
         int lives;
+        int lives_game;
         int trained;
         double loss_episode;
         StateHistory state_history(args.history_size);
 
         lives = args.lives;
+        lives_game = ale.lives();
         loss_episode = 0.0;
         steps = 0;
         total_reward = 0;
@@ -557,10 +559,11 @@ void train(args &args,
                     total_reward += ale.act(action);
 
                 // penalty for dying
-                if(ale.lives() < lives)
+                if(lives_game > ale.lives())
                 {
                     reward = -10;
-                    lives = 0; // ale.lives();
+                    lives--;
+                    lives_game--;
                 }
                 // penalty for noop
                 else if(action == ale::Action::PLAYER_A_NOOP)
