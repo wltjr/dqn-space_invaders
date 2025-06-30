@@ -445,6 +445,7 @@ void train(args &args,
         ale::reward_t total_reward;
         int steps;
         int lives;
+        int trained;
         double loss_episode;
         StateHistory state_history(args.history_size);
 
@@ -452,6 +453,7 @@ void train(args &args,
         loss_episode = 0.0;
         steps = 0;
         total_reward = 0;
+        trained = 0;
 
         if(args.train)
         {
@@ -624,12 +626,13 @@ void train(args &args,
                 expected_q_value = (rewards_tensor + args.gamma * next_q_value * (1 - dones_tensor)).to(device);
                 loss = torch::smooth_l1_loss(q_value, expected_q_value).to(device);
                 loss.requires_grad_(true);
-                loss_episode = loss.item().to<double>();
+                loss_episode += loss.item().to<double>();
 
                 // zero gradients, back propagation, & gradient descent
                 optimizer.zero_grad();
                 loss.backward();
                 optimizer.step();
+                trained++;
 
                 // clone policy network to target
                 if (i == update)
@@ -663,8 +666,8 @@ void train(args &args,
                                  i, total_reward, steps);
         // output only when training
         if(args.train)
-            std::cout << std::format(" epsilon: {} loss: {}",
-                                     args.epsilon, loss_episode);
+            std::cout << std::format(" epsilon: {} avg loss: {}",
+                                     args.epsilon, (loss_episode / trained));
         std::cout << std::endl;
         ale.reset_game();
     }
