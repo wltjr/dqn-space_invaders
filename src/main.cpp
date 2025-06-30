@@ -393,11 +393,12 @@ void init_weights(torch::nn::Module& model)
     for (auto &p : model.named_parameters()) {
         std::string y = p.key();
         auto z = p.value();
+        auto s = y.find(".",0) + 1;
 
-        if (y.compare(2, 6, "weight") == 0)
+        if (y.compare(s, 6, "weight") == 0)
             z.uniform_(0.0, 1.0);
-        else if (y.compare(2, 4, "bias") == 0)
-            z.uniform_(0.0, 1.0);
+        else if (y.compare(s, 4, "bias") == 0)
+            z.fill_(0);
     }
 }
 
