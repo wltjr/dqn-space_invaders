@@ -34,6 +34,7 @@
 #define UPDATE_FREQ 1000         // target network update frequency
 #define BATCH_SIZE 32            // minibatch sample size
 #define HISTORY_SIZE 4           // agent history size
+#define LIVES 1                  // default lives
 
 const char *argp_program_version = "Version 0.1";
 const char *argp_program_bug_address = "w@wltjr.com";
@@ -102,6 +103,7 @@ struct args
     int batch_size = BATCH_SIZE;
     int episodes = EPISODES;
     int history_size = HISTORY_SIZE;
+    int lives = LIVES;
     int memory = MEMORY;
     int memory_min = MEMORY_MIN;
     int noop = NOOP;
@@ -140,6 +142,7 @@ static struct argp_option options[] = {
     {"update_freq",'U',STRINGIFY(UPDATE_FREQ),0," Target network update frequency",2},
     {"batch_size",'B',STRINGIFY(BATCH_SIZE),0," Minibatch sample size for SGD update",2},
     {"history",'H',STRINGIFY(HISTORY_SIZE),0," Number of frames used as network input",2},
+    {"lives",'L',STRINGIFY(LIVES),0," Default lives 1 up to game max of 3",2},
     {0,0,0,0,"GNU Options:", 3},
     {0,0,0,0,0,0}
 };
@@ -204,6 +207,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
             break;
         case 'K':
             args->memory_min = arg ? atoi (arg) : MEMORY_MIN;
+            break;
+        case 'L':
+            args->lives = arg ? atoi (arg) : LIVES;
             break;
         case 'M':
             args->memory = arg ? atoi (arg) : MEMORY;
@@ -425,6 +431,10 @@ void train(args &args,
 
     auto start = std::chrono::high_resolution_clock::now();
 
+    // limit max lives to game limit
+    if(args.lives > ale.lives())
+        args.lives = ale.lives();
+
     max_episode = -1;
     max_score = -1;
     update = args.update_freq - 1;
@@ -449,7 +459,7 @@ void train(args &args,
         double loss_episode;
         StateHistory state_history(args.history_size);
 
-        lives = ale.lives();
+        lives = args.lives;
         loss_episode = 0.0;
         steps = 0;
         total_reward = 0;
@@ -730,6 +740,7 @@ int main(int argc, char* argv[])
     if(args.train)
     {
         std::cout << "Training Parameters:" << std::endl
+                  << "Lives:         " << args.lives << std::endl
                   << "Episodes:      " << args.episodes << std::endl
                   << "Alpha:         " << args.alpha << std::endl
                   << "Gamma:         " << args.gamma << std::endl
