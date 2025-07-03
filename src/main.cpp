@@ -454,17 +454,21 @@ void train(args &args,
     for(int i = 0; i < args.episodes ;i++)
     {
         ale::reward_t total_reward;
+        int ai;
         int steps;
         int lives;
         int lives_game;
+        int random;
         int trained;
         double loss_episode;
         StateHistory state_history(args.history_size);
 
+        ai = 0;
         lives = args.lives;
         lives_game = ale.lives();
         loss_episode = 0.0;
         steps = 0;
+        random = 0;
         total_reward = 0;
         trained = 0;
 
@@ -503,7 +507,10 @@ void train(args &args,
 
             // random action
             if(args.train && rand_epsilon(gen) < args.epsilon)
+            {
                 action = int_to_action(rand_action(gen));
+                random++;
+            }
             else
             // action from model
             {
@@ -516,6 +523,7 @@ void train(args &args,
                 else
                     action_tensor = model->act(states_tensor).to(device);
                 action = int_to_action(action_tensor[0].item<int>());
+                ai++;
             }
 
             // take action & collect reward
@@ -680,8 +688,8 @@ void train(args &args,
                                  i, total_reward, steps);
         // output only when training
         if(args.train)
-            std::cout << std::format(" epsilon: {} avg loss: {}",
-                                     args.epsilon, (loss_episode / trained));
+            std::cout << std::format(" ai: {} random: {} epsilon: {} avg loss: {}",
+                                     ai, random, args.epsilon, (loss_episode / trained));
         std::cout << std::endl;
         ale.reset_game();
     }
