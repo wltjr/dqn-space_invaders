@@ -684,11 +684,11 @@ void train(args &args,
         if(args.png)
             ale.saveScreenPNG(std::format("episode-{}.png", i));
 
-        std::cout << std::format("Episode {} score: {} steps: {}",
+        std::cout << std::format("Episode {:>4} score: {:>4} steps: {:>4}",
                                  i, total_reward, steps);
         // output only when training
         if(args.train)
-            std::cout << std::format(" ai: {} random: {} epsilon: {} avg loss: {}",
+            std::cout << std::format(" ai: {:>4} random: {:>4} epsilon: {:0.7f} avg loss: {:0.8f}",
                                      ai, random, args.epsilon, (loss_episode / trained));
         std::cout << std::endl;
         ale.reset_game();
