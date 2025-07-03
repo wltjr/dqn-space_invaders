@@ -396,12 +396,12 @@ torch::Tensor stack_state_tensors(int &history_size,
 
 
 /**
- * @brief Initialize weights in a neural network
+ * @brief Initialize weights & bias in a neural network modules
  * 
  * @param model reference to neural network module
  * @param init_weights weight initialize method
  */
-void init_weights(torch::nn::Module& model, int init_weights)
+void init_nn_modules(torch::nn::Module& model, int init_weights)
 {
     torch::NoGradGuard no_grad;
 
@@ -469,7 +469,7 @@ void train(args &args,
     if(args.train)
     {
         // init local policy and set device
-        init_weights(policy, args.init_weights);
+        init_nn_modules(policy, args.init_weights);
         policy.to(device);
         policy.train();
         model->train();
@@ -765,7 +765,7 @@ int main(int argc, char* argv[])
     if(args.load)
         torch::load(model, args.load_file);
     else
-        init_weights(*model, args.init_weights);
+        init_nn_modules(*model, args.init_weights);
 
     // set model device
     model->to(device);
