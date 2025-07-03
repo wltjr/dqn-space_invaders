@@ -35,6 +35,7 @@
 #define BATCH_SIZE 32            // minibatch sample size
 #define HISTORY_SIZE 4           // agent history size
 #define LIVES 1                  // default lives
+#define INIT_WEIGHTS 1           // default init weights method Kaiming Uniform
 
 const char *argp_program_version = "Version 0.1";
 const char *argp_program_bug_address = "w@wltjr.com";
@@ -47,6 +48,14 @@ const int WIDTH = 160;
 const int CROP_X = 13; // (110 - 84) / 2
 const int CROP_HEIGHT = 84;
 const int CROP_WIDTH = 110;
+
+enum class InitWeightMethod {
+    kaiming_normal,
+    kaiming_uniform,
+    xavier_normal,
+    xavier_uniform
+};
+
 
 struct NetImpl : torch::nn::Module
 {
@@ -103,6 +112,7 @@ struct args
     int batch_size = BATCH_SIZE;
     int episodes = EPISODES;
     int history_size = HISTORY_SIZE;
+    int init_weights = INIT_WEIGHTS;
     int lives = LIVES;
     int memory = MEMORY;
     int memory_min = MEMORY_MIN;
@@ -143,6 +153,7 @@ static struct argp_option options[] = {
     {"batch_size",'B',STRINGIFY(BATCH_SIZE),0," Minibatch sample size for SGD update",2},
     {"history",'H',STRINGIFY(HISTORY_SIZE),0," Number of frames used as network input",2},
     {"lives",'L',STRINGIFY(LIVES),0," Default lives 1 up to game max of 3",2},
+    {"weight",'W',STRINGIFY(INIT_WEIGHTS),0," Init weights, 0/1 Kaiming Norm/Uniform, 2/3 Xavier Norm/Uniform",2},
     {0,0,0,0,"GNU Options:", 3},
     {0,0,0,0,0,0}
 };
@@ -225,6 +236,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
             break;
         case 'U':
             args->update_freq = arg ? atoi (arg) : UPDATE_FREQ;
+            break;
+        case 'W':
+            args->init_weights = arg ? atoi (arg) : INIT_WEIGHTS;
             break;
         default:
             return ARGP_ERR_UNKNOWN;
@@ -385,10 +399,13 @@ torch::Tensor stack_state_tensors(int &history_size,
  * @brief Initialize weights in a neural network
  * 
  * @param model reference to neural network module
+ * @param init_weights weight initialize method
  */
-void init_weights(torch::nn::Module& model)
+void init_weights(torch::nn::Module& model, int init_weights)
 {
     torch::NoGradGuard no_grad;
+
+    InitWeightMethod iwm = static_cast<InitWeightMethod>(init_weights);
 
     for (auto &p : model.named_parameters()) {
         std::string y = p.key();
@@ -396,7 +413,16 @@ void init_weights(torch::nn::Module& model)
         auto s = y.find(".",0) + 1;
 
         if (y.compare(s, 6, "weight") == 0)
-            z.uniform_(0.0, 1.0);
+        {
+            if(iwm == InitWeightMethod::kaiming_normal)
+                torch::nn::init::kaiming_normal_(z);
+            else if(iwm == InitWeightMethod::xavier_normal)
+                torch::nn::init::xavier_normal_(z);
+            else if(iwm == InitWeightMethod::xavier_uniform)
+                torch::nn::init::xavier_uniform_(z);
+            else
+                torch::nn::init::kaiming_uniform_(z);
+        }
         else if (y.compare(s, 4, "bias") == 0)
             z.fill_(0);
     }
@@ -443,7 +469,7 @@ void train(args &args,
     if(args.train)
     {
         // init local policy and set device
-        init_weights(policy);
+        init_weights(policy, args.init_weights);
         policy.to(device);
         policy.train();
         model->train();
@@ -739,7 +765,7 @@ int main(int argc, char* argv[])
     if(args.load)
         torch::load(model, args.load_file);
     else
-        init_weights(*model);
+        init_weights(*model, args.init_weights);
 
     // set model device
     model->to(device);
@@ -751,7 +777,20 @@ int main(int argc, char* argv[])
     // enable hyper training
     if(args.train)
     {
-        std::cout << "Training Parameters:" << std::endl
+        std::string init_weights_method;
+        InitWeightMethod iwm = static_cast<InitWeightMethod>(args.init_weights);
+
+        if(iwm == InitWeightMethod::kaiming_normal)
+            init_weights_method = "Kaiming normal";
+        else if(iwm == InitWeightMethod::xavier_normal)
+            init_weights_method = "Xavier normal";
+        else if(iwm == InitWeightMethod::xavier_uniform)
+            init_weights_method = "Xavier uniform";
+        else
+            init_weights_method = "Kaiming uniform";
+
+        std::cout << std::endl
+                  << "Training Parameters:" << std::endl
                   << "Lives:         " << args.lives << std::endl
                   << "Episodes:      " << args.episodes << std::endl
                   << "Alpha:         " << args.alpha << std::endl
@@ -765,7 +804,9 @@ int main(int argc, char* argv[])
                   << "Frame Skip:    " << args.skip << std::endl
                   << "Update Freq.:  " << args.update_freq << std::endl
                   << "Batch Size:    " << args.batch_size << std::endl
-                  << "History Size:  " << args.history_size << std::endl;
+                  << "History Size:  " << args.history_size << std::endl
+                  << "Init Weights:  " << init_weights_method << std::endl
+                  << std::endl;
 
         train(args, ale, model, device);
 
