@@ -688,7 +688,7 @@ void train(args &args,
                 trained++;
 
                 // clone policy network to target
-                if (i == update)
+                if (total_steps == update)
                 {
                     update += args.update_freq;
                     clone_network(policy, *model);
