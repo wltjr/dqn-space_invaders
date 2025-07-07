@@ -445,6 +445,7 @@ void train(args &args,
     int update;
     int max_episode;
     ale::reward_t max_score;
+    int total_steps;
     ReplayMemory memory(args.memory);
     NetImpl policy(args.history_size, ACTIONS);
     torch::optim::Adam optimizer(policy.parameters(),
@@ -464,6 +465,7 @@ void train(args &args,
 
     max_episode = -1;
     max_score = -1;
+    total_steps = 0;
     update = args.update_freq - 1;
 
     if(args.train)
@@ -520,7 +522,10 @@ void train(args &args,
             state_history.add(state);
         }
 
-        for(; !ale.game_over() && lives > 0; steps++)
+        // update total steps
+        total_steps += steps;
+
+        for(; !ale.game_over() && lives > 0; steps++, total_steps++)
         {
             float reward;
             ale::Action action;
@@ -590,7 +595,7 @@ void train(args &args,
                     reward /= 1000;
 
                 // skip k frames, repeat action
-                for(int k = 0; k < args.skip; steps++, k++)
+                for(int k = 0; k < args.skip; k++, steps++, total_steps++)
                     total_reward += ale.act(action);
 
                 // penalty for dying
@@ -724,8 +729,8 @@ void train(args &args,
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
 
     std::cout << std::endl
-              << std::format("Elapsed Time: {}s - Episode {} Max Score: {}",
-                             duration.count(), max_episode, max_score)
+              << std::format("Elapsed Time: {}s Total Steps: {} - Episode {} Max Score: {}",
+                             duration.count(), total_steps, max_episode, max_score)
               << std::endl;
 }
 
