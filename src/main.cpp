@@ -522,7 +522,7 @@ void train(args &args,
 
         for(; !ale.game_over() && lives > 0; steps++)
         {
-            ale::reward_t reward;
+            float reward;
             ale::Action action;
             cv::Mat state;
             torch::Tensor state_tensor;
@@ -554,7 +554,7 @@ void train(args &args,
 
             // take action & collect reward
             reward = ale.act(action);
-            total_reward += reward;
+            total_reward += static_cast<int64_t>(reward);
 
             if(args.train)
             {
@@ -580,14 +580,14 @@ void train(args &args,
                 torch::TensorOptions options;
                 std::vector<torch::Tensor> states;
                 std::vector<int64_t> actions;
-                std::vector<int64_t> rewards;
+                std::vector<float> rewards;
                 std::vector<int64_t> dones;
                 std::vector<torch::Tensor> state_nexts;
                 std::vector<ReplayMemory::replay_t> batch;
 
-                // normalize reward -1, 0, or 1
+                // reward -1, -10, 0, or 1/1000
                 if(reward > 0)
-                    reward = 1;
+                    reward /= 1000;
 
                 // skip k frames, repeat action
                 for(int k = 0; k < args.skip; steps++, k++)
@@ -609,7 +609,7 @@ void train(args &args,
 
                 options = torch::TensorOptions().dtype(torch::kInt64);
                 action_tensor = torch::tensor(action, options).to(device);
-                reward_tensor = torch::tensor(reward, options).to(device);
+                reward_tensor = torch::tensor(reward, torch::kFloat32).to(device);
                 done_tensor = torch::tensor(ale.game_over(), options).to(device);
                 next_tensor = state_to_tensor(next).to(device);
 
@@ -640,7 +640,7 @@ void train(args &args,
                     if (a % args.history_size == 0)
                     {
                         actions.emplace_back(b.action.item().to<int64_t>());
-                        rewards.emplace_back(b.reward.item().to<int64_t>());
+                        rewards.emplace_back(b.reward.item().to<float>());
                         dones.emplace_back(b.done.item().to<int64_t>());
                     }
 
@@ -657,7 +657,7 @@ void train(args &args,
                                                   options).to(device);
                 rewards_tensor = torch::from_blob(rewards.data(),
                                                   { static_cast<int64_t>(rewards.size()), 1 },
-                                                  options).to(device);
+                                                  torch::kFloat32).to(device);
                 dones_tensor = torch::from_blob(dones.data(),
                                                 { static_cast<int64_t>(dones.size()), 1 },
                                                 options).to(device);
