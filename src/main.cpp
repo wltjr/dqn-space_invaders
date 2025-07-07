@@ -31,7 +31,7 @@
 #define EPSILON_DECAY 0.999999   // decay rate for exploration
 #define MEMORY 50000             // replay memory buffer size
 #define MEMORY_MIN 10000         // minimum replay memory buffer size
-#define UPDATE_FREQ 1000         // target network update frequency
+#define UPDATE_FREQ 10000        // target network update frequency
 #define BATCH_SIZE 32            // minibatch sample size
 #define HISTORY_SIZE 4           // agent history size
 #define LIVES 1                  // default lives
