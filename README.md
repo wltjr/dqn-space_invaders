@@ -32,8 +32,8 @@ The following software is required for proper operation
 - [CMake >= 3.20](https://cmake.org/download/)
 - [libsdl >= 2.30](https://www.libsdl.org/)
 - [ALE >= 0.11.0](https://ale.farama.org/)
-- [OpenCV >= 4.11.0](https://opencv.org/releases/)
-- [PyTorch >= 2.7.0](https://pytorch.org/get-started/locally/)
+- [CUDA Toolkit >= 12.0](https://developer.nvidia.com/cuda-toolkit)
+- [Caffe2/PyTorch >= 2.7.0](https://pytorch.org/get-started/locally/)
 
 Atari ROM `space_invaders.bin` was obtained from
 [Atari Mania](https://www.atarimania.com/game-atari-2600-vcs-space-invaders_s6947.html)
