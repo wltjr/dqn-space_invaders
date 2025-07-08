@@ -2,6 +2,10 @@
 
 Deep Q-Network Space Invaders using the [Arcade Learning Environment (ALE)](https://ale.farama.org/)
 
+The following papers were used as reference for the implementation:
+- Playing Atari with Deep Reinforcement Learning [link](https://arxiv.org/abs/1312.5602)
+- Human-level control through deep reinforcement learning [link](https://www.nature.com/articles/nature14236)
+
 ## State Space
 The state space consists of frame of the grayscale game screen resized 50% and
 cropped to 84 x 84.
