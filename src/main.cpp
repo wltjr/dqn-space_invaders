@@ -590,6 +590,10 @@ void train(args &args,
                 std::vector<torch::Tensor> state_nexts;
                 std::vector<ReplayMemory::replay_t> batch;
 
+                // decay epsilon
+                args.epsilon = std::max(args.epsilon_min, 
+                                        args.epsilon * args.epsilon_decay);
+
                 // reward -1, -10, 0, or 1/1000
                 if(reward > 0)
                     reward /= 1000;
@@ -693,10 +697,6 @@ void train(args &args,
                     update += args.update_freq;
                     clone_network(policy, *model);
                 }
-
-                // decay epsilon
-                args.epsilon = std::max(args.epsilon_min, 
-                                        args.epsilon * args.epsilon_decay);
             }
         }
 
