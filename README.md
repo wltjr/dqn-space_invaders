@@ -54,3 +54,21 @@ The primary executable is `dqnsi` multi-agent hedonic simulation environment.
 The program is implemented using GNU Argp, and has available `--help` menu for
 information on the arguments that each program accepts, which are required and
 are optional.
+
+## Credits
+
+Credits and thanks for resources referenced and used in this repository,
+including some code and/or project structure, go to the following:
+
+- [DQN 3.0](https://github.com/google-deepmind/dqn) -
+  Lua/Torch implementation of DQN (Nature, 2015) 
+- [Pytorch-RL-CPP](https://github.com/navneet-nmk/Pytorch-RL-CPP) -
+  A Repository with C++ implementations of Reinforcement Learning Algorithms (Pytorch) -
+- [Atari-DQ](https://github.com/iewug/Atari-DQN)
+  PyTorch implementation of DQN, DDQN and Dueling DQN to solve Atari games including PongNoFrameskip-v4, BreakoutNoFrameskip-v4 and BoxingNoFrameskip-v4
+- [Data Transfer to and from PyTorch](https://www.simonwenkel.com/notes/software_libraries/pytorch/data_transfer_to_and_from_pytorch.html#stdvector-totorchtensor-and-back) -
+  PyTorch and the underlying libtorch is only of use when copying data to it.
+- [The Essential Guide to Pytorch Loss Functions](https://www.v7labs.com/blog/pytorch-loss-functions) -
+  In this article, we will go in-depth about the loss functions and their implementation in the PyTorch framework.
+- [How to initialize deep neural networks?](https://pouannes.github.io/blog/initialization/) -
+  Xavier and Kaiming initialization
