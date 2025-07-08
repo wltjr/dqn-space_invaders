@@ -729,8 +729,11 @@ void train(args &args,
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
 
     std::cout << std::endl
-              << std::format("Elapsed Time: {}s Total Steps: {} - Episode {} Max Score: {}",
-                             duration.count(), total_steps, max_episode, max_score)
+              << std::format("Elapsed Time: {}s ", duration.count());
+    // output only when training
+    if(args.train)
+        std::cout << std::format("Total Steps: {} ", total_steps);
+    std::cout << std::format("- Episode {} Max Score: {}", max_episode, max_score)
               << std::endl;
 }
 
