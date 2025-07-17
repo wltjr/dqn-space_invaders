@@ -1,5 +1,8 @@
 # DQN-Space Invaders
 
+[![License](http://img.shields.io/badge/license-Apache_2.0-blue.svg?colorB=9977bb&style=plastic)](https://github.com/wltjr/dqn-space_invaders/blob/master/LICENSE.txt)
+[![Code Quality](https://sonarcloud.io/api/project_badges/measure?project=wltjr_dqn-space_invaders&metric=alert_status)](https://sonarcloud.io/dashboard?id=wltjr_dqn-space_invaders)
+
 Deep Q-Network Space Invaders using the [Arcade Learning Environment (ALE)](https://ale.farama.org/)
 
 The following papers were used as reference for the implementation:
