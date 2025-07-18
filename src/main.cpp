@@ -20,6 +20,7 @@
 #define STRINGIFY2(x) #x
 
 // default values
+#define PT_FILE "dqn_space_invaders.pt"
 #define EPISODES 10
 #define NOOP 30
 #define SKIP 2
@@ -39,8 +40,6 @@
 
 const char *argp_program_version = "Version 0.1";
 const char *argp_program_bug_address = "w@wltjr.com";
-
-const char *PT_FILE = "dqn_space_invaders.pt";
 
 const int ACTIONS = 6;
 const int HEIGHT = 210;
