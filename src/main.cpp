@@ -128,7 +128,7 @@ struct args
 };
 
 // help menu
-static struct argp_option options[] = {
+constexpr static struct argp_option options[] = {
     {0,0,0,0,"Optional arguments:",1},
     {"audio",'a',0,0," Enable audio/sound ",1},
     {"display",'d',0,0," Enable display on screen ",1},
@@ -246,7 +246,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 }
 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-static struct argp argp	 =  { options, parse_opt };
+constexpr static struct argp argp	 =  { options, parse_opt };
 
 
 /**
