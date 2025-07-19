@@ -25,7 +25,7 @@ class ReplayMemory
          * 
          * @param capacity the capacity of the replay memory
          */
-        ReplayMemory(std::size_t capacity);
+        explicit ReplayMemory(std::size_t capacity);
 
         /**
          * @brief Destroy the ReplayMemory, empty/unused
