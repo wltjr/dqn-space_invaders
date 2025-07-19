@@ -37,7 +37,7 @@ class ReplayMemory
          * 
          * @param replay a replay instance to add to memory
          */
-        void add(replay_t replay);
+        void add(replay_t const &replay);
 
         /**
          * @brief Sample replays from memory
