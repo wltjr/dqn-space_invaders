@@ -29,7 +29,7 @@ std::vector<ReplayMemory::replay_t> ReplayMemory::sample(int size)
     return v;
 }
 
-int64_t ReplayMemory::size()
+int64_t ReplayMemory::size() const
 {
     return memory.size();
 }
