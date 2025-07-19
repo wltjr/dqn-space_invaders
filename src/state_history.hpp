@@ -17,7 +17,7 @@ class StateHistory
          * 
          * @param capacity the capacity/length of the state history
          */
-        StateHistory(std::size_t capacity);
+        explicit StateHistory(std::size_t capacity);
 
         /**
          * @brief Destroy the StateHistory, empty/unused
