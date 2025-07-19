@@ -53,7 +53,7 @@ class ReplayMemory
          * 
          * @return size of replay memory in use
          */
-        int64_t size();
+        int64_t size() const;
 
     private:
         std::size_t capacity;
