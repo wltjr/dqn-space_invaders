@@ -11,7 +11,7 @@ ReplayMemory::~ReplayMemory() = default;
 
 ReplayMemory::ReplayMemory(std::size_t capacity) : capacity(capacity) {};
 
-void ReplayMemory::add(replay_t replay)
+void ReplayMemory::add(replay_t const &replay)
 {
     // remove last if at capacity
     if(memory.size() == capacity)
