@@ -512,7 +512,7 @@ void train(args &args,
         }
 
         // prime history less one for first state in next loop
-        for(int i = 1; i < args.history_size; i++, steps++)
+        for(int c = 1; c < args.history_size; c++, steps++)
         {
             cv::Mat state;
 
