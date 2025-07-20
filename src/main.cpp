@@ -267,7 +267,7 @@ void clone_network(torch::nn::Module const &policy,
     for (auto &param : new_params)
     {
         auto name = param.key();
-        auto *t = params.find(name);
+        const auto *t = params.find(name);
         if (t != nullptr)
             t->copy_(param.value());
         else
