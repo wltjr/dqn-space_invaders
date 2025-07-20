@@ -404,7 +404,7 @@ void init_nn_modules(torch::nn::Module& model, int init_weights)
 {
     torch::NoGradGuard no_grad;
 
-    InitWeightMethod iwm = static_cast<InitWeightMethod>(init_weights);
+    auto iwm = static_cast<InitWeightMethod>(init_weights);
 
     for (auto &p : model.named_parameters()) {
         std::string y = p.key();
@@ -760,7 +760,7 @@ int main(int argc, char* argv[])
     ale.loadROM("./rom/space_invaders.bin");
 
     // default to CPU
-    torch::Device device = torch::Device(torch::kCPU);
+    auto device = torch::Device(torch::kCPU);
 
     // switch to GPU if available
     if(torch::cuda::is_available())
@@ -785,7 +785,7 @@ int main(int argc, char* argv[])
     if(args.train)
     {
         std::string init_weights_method;
-        InitWeightMethod iwm = static_cast<InitWeightMethod>(args.init_weights);
+        auto iwm = static_cast<InitWeightMethod>(args.init_weights);
 
         if(iwm == InitWeightMethod::kaiming_normal)
             init_weights_method = "Kaiming normal";
