@@ -255,8 +255,8 @@ constexpr static struct argp argp	 =  { options, parse_opt };
  * @param policy model network
  * @param target model network
  */
-void clone_network(torch::nn::Module &policy,
-                   torch::nn::Module &target)
+void clone_network(torch::nn::Module const &policy,
+                   torch::nn::Module const &target)
 {
     // enable parameters copying
     torch::autograd::GradMode::set_enabled(false);
@@ -363,7 +363,7 @@ torch::Tensor state_to_tensor(cv::Mat &state)
  * 
  * @return vector of state frame tensors in groups
  */
-torch::Tensor stack_state_tensors(int &history_size,
+torch::Tensor stack_state_tensors(int const &history_size,
                                   std::vector<torch::Tensor> &states,
                                   torch::Device &device)
 {
@@ -400,7 +400,7 @@ torch::Tensor stack_state_tensors(int &history_size,
  * @param model reference to neural network module
  * @param init_weights weight initialize method
  */
-void init_nn_modules(torch::nn::Module& model, int init_weights)
+void init_nn_modules(torch::nn::Module const &model, int init_weights)
 {
     torch::NoGradGuard no_grad;
 
