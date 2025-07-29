@@ -35,7 +35,7 @@
 #define UPDATE_FREQ 10000        // target network update frequency
 #define BATCH_SIZE 32            // minibatch sample size
 #define HISTORY_SIZE 4           // agent history size
-#define LIVES 1                  // default lives
+#define LIVES 3                  // default lives
 #define INIT_WEIGHTS 1           // default init weights method Kaiming Uniform
 
 const char *argp_program_version = "Version 0.1";
