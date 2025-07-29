@@ -29,7 +29,7 @@
 #define GAMMA 0.99               // discount factor
 #define EPSILON 1.0              // exploration rate (starting value)
 #define EPSILON_MIN 0.1          // minimum exploration rate
-#define EPSILON_DECAY 0.999999   // decay rate for exploration
+#define EPSILON_DECAY 0.99999    // decay rate for exploration
 #define MEMORY 50000             // replay memory buffer size
 #define MEMORY_MIN 10000         // minimum replay memory buffer size
 #define UPDATE_FREQ 10000        // target network update frequency
