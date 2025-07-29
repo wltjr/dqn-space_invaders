@@ -750,11 +750,16 @@ int main(int argc, char* argv[])
     std::time_t time = std::chrono::system_clock::to_time_t(now);
     std::cout << std::ctime(&time);
 
+    // random seed
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> rand_seed(100, 1000);
+
     // initialize Arcade Learning Environment
     ale::ALEInterface ale;
 
     // initialize game
-    ale.setInt("random_seed", 123);
+    ale.setInt("random_seed", rand_seed(gen));
     ale.setBool("display_screen", args.display);
     ale.setBool("sound", args.sound);
     ale.loadROM("./rom/space_invaders.bin");
