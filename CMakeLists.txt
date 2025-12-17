@@ -28,6 +28,7 @@ include_directories(src ${OpenCV_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS})
 # executable binaries - DQN Space Invaders
 add_executable(dqnsi src/argp.cpp
                      src/main.cpp
+                     src/networks.cpp
                      src/replay_memory.cpp
                      src/state_history.cpp)
 
