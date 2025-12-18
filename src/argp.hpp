@@ -39,6 +39,7 @@ enum class InitWeightMethod
 // command line arguments
 struct args
 {
+    bool dueling_dqn = false;
     bool display = false;
     bool game = false;
     bool load = false;
@@ -91,6 +92,7 @@ constexpr static struct argp_option options[] = {
     {"history",'H',STRINGIFY(HISTORY_SIZE),0," Number of frames used as network input",2},
     {"lives",'L',STRINGIFY(LIVES),0," Default lives 1 up to game max of 3",2},
     {"weight",'W',STRINGIFY(INIT_WEIGHTS),0," Init weights, 0/1 Kaiming Norm/Uniform, 2/3 Xavier Norm/Uniform",2},
+    {"rival",'R',0,0," Enable Dueling DQN",2},
     {0,0,0,0,"GNU Options:", 3},
     {0,0,0,0,0,0}
 };
