@@ -5,7 +5,43 @@
 /**
  * @brief Deep Q-Network
  */
-struct DQNImpl : torch::nn::Module
+struct BaseDQNImpl : torch::nn::Module
+{
+    /**
+     * @brief Construct a new Graph object, empty/unused
+     */
+    BaseDQNImpl();
+
+    /**
+     * @brief Destroy the Graph, empty/unused
+     */
+    virtual ~BaseDQNImpl();
+
+    /**
+     * @brief Perform forward pass of input data through network
+     *
+     * @param x tensor of states up to history size
+     *
+     * @return torch::Tensor q-values from the network
+     */
+    virtual torch::Tensor forward(torch::Tensor x) = 0;
+
+    /**
+     * @brief Get action from network
+     *
+     * @param state tensor of current state
+     *
+     * @return torch::Tensor scalar of the action to be taken
+     */
+    torch::Tensor act(torch::Tensor state);
+};
+
+TORCH_MODULE(BaseDQN);
+
+/**
+ * @brief Deep Q-Network
+ */
+struct DQNImpl : BaseDQNImpl
 {
     torch::nn::Conv2d conv1;
     torch::nn::Conv2d conv2;
@@ -28,16 +64,7 @@ struct DQNImpl : torch::nn::Module
      *
      * @return torch::Tensor q-values from the network
      */
-    torch::Tensor forward(torch::Tensor x);
-
-    /**
-     * @brief Get action from network
-     *
-     * @param state tensor of current state
-     *
-     * @return torch::Tensor scalar of the action to be taken
-     */
-    torch::Tensor act(torch::Tensor state);
+    torch::Tensor forward(torch::Tensor x) override;
 };
 
 TORCH_MODULE(DQN);
@@ -45,7 +72,7 @@ TORCH_MODULE(DQN);
 /**
  * @brief Dueling Deep Q-Network
  */
-struct DuelingDQNImpl : torch::nn::Module
+struct DuelingDQNImpl : BaseDQNImpl
 {
     int64_t actions;
     torch::nn::Conv2d conv1;
@@ -71,16 +98,7 @@ struct DuelingDQNImpl : torch::nn::Module
      *
      * @return torch::Tensor q-values from the network, shape: (bs,actions)
      */
-    torch::Tensor forward(torch::Tensor x);
-
-    /**
-     * @brief Get action from network
-     *
-     * @param state tensor of current state, shape: (bs,f,h,w)
-     *
-     * @return torch::Tensor scalar of the action to be taken
-     */
-    torch::Tensor act(torch::Tensor state);
+    torch::Tensor forward(torch::Tensor x) override;
 };
 
 TORCH_MODULE(DuelingDQN);
