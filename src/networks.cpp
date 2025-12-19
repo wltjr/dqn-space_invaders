@@ -1,6 +1,18 @@
 
 #include "networks.hpp"
 
+BaseDQNImpl::BaseDQNImpl() = default;
+
+BaseDQNImpl::~BaseDQNImpl() = default;
+
+torch::Tensor BaseDQNImpl::act(torch::Tensor state)
+{
+    torch::Tensor q_value = forward(state);
+    torch::Tensor action = std::get<1>(q_value.max(1));
+
+    return action;
+}
+
 DQNImpl::DQNImpl(int64_t frames, int64_t actions)
     : conv1(torch::nn::Conv2dOptions(frames, 32, 8).stride(4)), //  N , 4 x 8
       conv2(torch::nn::Conv2dOptions(32, 64, 4).stride(2)),     // 32 , 8 x 8
@@ -24,14 +36,6 @@ torch::Tensor DQNImpl::forward(torch::Tensor x)
     x = torch::relu(fc1(x));
 
     return fc2(x);
-}
-
-torch::Tensor DQNImpl::act(torch::Tensor state)
-{
-    torch::Tensor q_value = forward(state);
-    torch::Tensor action = std::get<1>(q_value.max(1));
-
-    return action;
 }
 
 DuelingDQNImpl::DuelingDQNImpl(int64_t frames, int64_t actions)
@@ -71,12 +75,4 @@ torch::Tensor DuelingDQNImpl::forward(torch::Tensor x)
     
     x = val + adv - adv.mean(1).unsqueeze(1).expand(x.size(0), actions);
     return x;
-}
-
-torch::Tensor DuelingDQNImpl::act(torch::Tensor state)
-{
-    torch::Tensor q_value = forward(state);
-    torch::Tensor action = std::get<1>(q_value.max(1));
-
-    return action;
 }
