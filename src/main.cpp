@@ -1,3 +1,4 @@
+
 #include <argp.h>
 
 #include <algorithm>
@@ -214,29 +215,19 @@ void init_nn_modules(torch::nn::Module const &model, int init_weights)
  * @param model reference to libtorch model
  * @param device reference to torch  hardware device
  */
+template <typename T>
 void train(args &args, 
            ale::ALEInterface &ale,
-           std::shared_ptr<BaseDQNImpl>  model,
+           std::shared_ptr<T> model,
            torch::Device &device)
 {
     int update;
     int max_episode;
     ale::reward_t max_score;
     int total_steps;
-    std::shared_ptr<BaseDQNImpl> policy;
     ReplayMemory memory(args.memory);
-
-    if(args.dueling_dqn)
-    {
-        policy = std::make_shared<DuelingDQNImpl>(args.history_size, ACTIONS);
-        model = std::dynamic_pointer_cast<DuelingDQNImpl>(model);
-    }
-    else
-    {
-        policy = std::make_shared<DQNImpl>(args.history_size, ACTIONS);
-        model = std::dynamic_pointer_cast<DQNImpl>(model);
-    }
-    torch::optim::Adam optimizer(policy->parameters(),
+    T policy(args.history_size, ACTIONS);
+    torch::optim::Adam optimizer(policy.parameters(),
                                  torch::optim::AdamOptions(args.alpha));
 
     // initialize random device
@@ -259,9 +250,9 @@ void train(args &args,
     if(args.train)
     {
         // init local policy and set device
-        init_nn_modules(*policy, args.init_weights);
-        policy->to(device);
-        policy->train();
+        init_nn_modules(policy, args.init_weights);
+        policy.to(device);
+        policy.train();
         model->train();
     }
     else
@@ -338,7 +329,7 @@ void train(args &args,
 
                 states_tensor = state_history.getStates().to(device);
                 if(args.train)
-                    action_tensor = policy->act(states_tensor).to(device);
+                    action_tensor = policy.act(states_tensor).to(device);
                 else
                     action_tensor = model->act(states_tensor).to(device);
                 action = int_to_action(action_tensor[0].item<int>());
@@ -460,9 +451,9 @@ void train(args &args,
                                                 options).to(device);
 
                 // get q-values from policy and target
-                q_values = policy->forward(states_tensor).to(device);
+                q_values = policy.forward(states_tensor).to(device);
                 next_target_q_values = model->forward(state_nexts_tensor).to(device);
-                next_q_values = policy->forward(state_nexts_tensor).to(device);
+                next_q_values = policy.forward(state_nexts_tensor).to(device);
 
                 // calculate targets for q-learning update 
                 q_value = q_values.gather(0, actions_tensor).to(device);
@@ -483,14 +474,14 @@ void train(args &args,
                 if (total_steps == update)
                 {
                     update += args.update_freq;
-                    clone_network(*policy, *model);
+                    clone_network(policy, *model);
                 }
             }
         }
 
         // final clone of trained policy to target model
         if(args.train)
-            clone_network(*policy, *model);
+            clone_network(policy, *model);
 
         // track max episode & score
         if(total_reward > max_score)
@@ -525,11 +516,56 @@ void train(args &args,
               << std::endl;
 }
 
+/**
+ * @brief Network wrapper, allows use of different NN via template
+ *
+ * @param args reference to args structure
+ * @param ale reference to arcade learning environment
+ * @param device reference to torch  hardware device
+ */
+template <typename T>
+void select_nn(args &args,
+               ale::ALEInterface &ale,
+               torch::Device &device)
+{
+    std::shared_ptr<T> model = std::make_shared<T>(args.history_size, ACTIONS);
+
+    // load model
+    if(args.load)
+        torch::load(model, args.load_file);
+    else
+        init_nn_modules(*model, args.init_weights);
+
+    // set model device
+    model->to(device);
+
+    // must load or train
+    if(!args.load && !args.train)
+        args.train = true;
+
+    // enable hyper training
+    if(args.train)
+    {
+        print_training_params(args);
+
+        train<T>(args, ale, model, device);
+
+        // only save after training
+        if(args.save)
+            torch::save(model, args.save_file);
+    }
+
+    // play game using trained model, random actions if empty
+    if(args.game)
+    {
+        args.train = false;
+        train(args, ale, model, device);
+    }
+}
 
 int main(int argc, char* argv[])
 {
     struct args args;
-    std::shared_ptr<BaseDQNImpl> model;
 
     // parse command line options
     argp_parse (&argp, argc, argv, 0, 0, &args);
@@ -561,41 +597,9 @@ int main(int argc, char* argv[])
         device = torch::Device(torch::kCUDA);
 
     if(args.dueling_dqn)
-        model = std::make_shared<DuelingDQNImpl>(args.history_size, ACTIONS);
+        select_nn<DuelingDQNImpl>(args, ale, device);
     else
-        model = std::make_shared<DQNImpl>(args.history_size, ACTIONS);
-
-    // load model
-    if(args.load)
-        torch::load(model, args.load_file);
-    else
-        init_nn_modules(*model, args.init_weights);
-
-    // set model device
-    model->to(device);
-
-    // must load or train
-    if(!args.load && !args.train)
-        args.train = true;
-
-    // enable hyper training
-    if(args.train)
-    {
-        print_training_params(args);
-
-        train(args, ale, model, device);
-
-        // only save after training
-        if(args.save)
-            torch::save(model, args.save_file);
-    }
-
-    // play game using trained model, random actions if empty
-    if(args.game)
-    {
-        args.train = false;
-        train(args, ale, model, device);
-    }
+        select_nn<DQNImpl>(args, ale, device);
 
     return 0;
 }
