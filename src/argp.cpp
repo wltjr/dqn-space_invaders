@@ -74,6 +74,9 @@ error_t parse_opt(int key, char *arg, struct argp_state *state)
         case 'S':
             args->skip = arg ? atoi (arg) : SKIP;
             break;
+        case 'T':
+            args->double_dqn = true;
+            break;
         case 'U':
             args->update_freq = arg ? atoi (arg) : UPDATE_FREQ;
             break;
@@ -90,6 +93,7 @@ void print_training_params(args_t &args)
 {
     std::string init_weights_method;
     std::string network;
+    std::string type;
     auto iwm = static_cast<InitWeightMethod>(args.init_weights);
 
     if(iwm == InitWeightMethod::kaiming_normal)
@@ -100,6 +104,11 @@ void print_training_params(args_t &args)
         init_weights_method = "Xavier uniform";
     else
         init_weights_method = "Kaiming uniform";
+
+    if(args.double_dqn)
+        type = "Double";
+    else
+        type = "Regular";
 
     if(args.dueling_dqn)
         network = "Dueling DQN";
@@ -123,6 +132,7 @@ void print_training_params(args_t &args)
                 << "Batch Size:    " << args.batch_size << std::endl
                 << "History Size:  " << args.history_size << std::endl
                 << "Init Weights:  " << init_weights_method << std::endl
+                << "DQN:           " << type << std::endl
                 << "Network:       " << network << std::endl
                 << std::endl;
 }
