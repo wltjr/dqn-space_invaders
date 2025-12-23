@@ -604,10 +604,16 @@ int main(int argc, char* argv[])
 
     // default to CPU
     auto device = torch::Device(torch::kCPU);
+    std::cout << "Device: ";
 
     // switch to GPU if available
     if(torch::cuda::is_available())
+    {
         device = torch::Device(torch::kCUDA);
+        std::cout << "CUDA" << std::endl;
+    }
+    else
+        std::cout << "CPU" << std::endl;
 
     if(args.dueling_dqn)
         select_nn<DuelingDQNImpl>(args, ale, device);
