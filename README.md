@@ -5,12 +5,15 @@
 
 Deep Q-Network Space Invaders using the
 [Arcade Learning Environment (ALE)](https://ale.farama.org/) and
-[PyTorch](https://pytorch.org/) via libTorch.
+[PyTorch](https://pytorch.org/) via libTorch. Contains DQN, Double DQN, and
+Dueling DQN.
 
 The following papers were used as reference for the implementation:
 
 - Playing Atari with Deep Reinforcement Learning [link](https://arxiv.org/abs/1312.5602)
 - Human-level control through deep reinforcement learning [link](https://www.nature.com/articles/nature14236)
+- Deep Reinforcement Learning with Double Q-learning [link](https://arxiv.org/abs/1509.06461)
+- Dueling Network Architectures for Deep Reinforcement Learning [link](https://arxiv.org/abs/1511.06581)
 
 ## State Space
 
