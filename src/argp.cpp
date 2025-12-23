@@ -41,6 +41,9 @@ error_t parse_opt(int key, char *arg, struct argp_state *state)
         case 'B':
             args->batch_size = arg ? atoi (arg) : BATCH_SIZE;
             break;
+        case 'C':
+            args->dueling_dqn = true;
+            break;
         case 'G':
             args->gamma = arg ? atof (arg) : GAMMA;
             break;
@@ -119,6 +122,7 @@ void print_training_params(args_t &args)
                 << "Training Parameters:" << std::endl
                 << "Lives:         " << args.lives << std::endl
                 << "Episodes:      " << args.episodes << std::endl
+                << "Clip Rewards:  " << args.clip << std::endl
                 << "Alpha:         " << args.alpha << std::endl
                 << "Gamma:         " << args.gamma << std::endl
                 << "Epsilon:       " << args.epsilon << std::endl
