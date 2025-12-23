@@ -373,9 +373,14 @@ void train(args &args,
                 args.epsilon = std::max(args.epsilon_min, 
                                         args.epsilon * args.epsilon_decay);
 
-                // reward -1, -10, 0, or 1/1000
+                // reward -1, -10, 0, 1 or 1/1000
                 if(reward > 0)
-                    reward /= 1000;
+                {
+                    if(args.clip)
+                        reward = 1;
+                    else
+                        reward /= 1000;
+                }
 
                 // skip k frames, repeat action
                 for(int k = 0; k < args.skip; k++, steps++, total_steps++)
@@ -384,7 +389,10 @@ void train(args &args,
                 // penalty for dying
                 if(lives_game > ale.lives())
                 {
-                    reward = -10;
+                    if(args.clip)
+                        reward = -1;
+                    else
+                        reward = -10;
                     lives--;
                     lives_game--;
                 }
