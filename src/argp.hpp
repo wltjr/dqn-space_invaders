@@ -39,6 +39,7 @@ enum class InitWeightMethod
 // command line arguments
 struct args
 {
+    bool clip = false;
     bool double_dqn = false;
     bool dueling_dqn = false;
     bool display = false;
@@ -92,6 +93,7 @@ constexpr static struct argp_option options[] = {
     {"batch_size",'B',STRINGIFY(BATCH_SIZE),0," Minibatch sample size for SGD update",2},
     {"history",'H',STRINGIFY(HISTORY_SIZE),0," Number of frames used as network input",2},
     {"lives",'L',STRINGIFY(LIVES),0," Default lives 1 up to game max of 3",2},
+    {"clip",'C',0,0," Clip/limit rewards to [-1,1]",2},
     {"weight",'W',STRINGIFY(INIT_WEIGHTS),0," Init weights, 0/1 Kaiming Norm/Uniform, 2/3 Xavier Norm/Uniform",2},
     {"rival",'R',0,0," Enable Dueling DQN",2},
     {"twice",'T',0,0," Enable Double DQN",2},
