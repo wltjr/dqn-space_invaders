@@ -44,14 +44,17 @@ error_t parse_opt(int key, char *arg, struct argp_state *state)
         case 'C':
             args->dueling_dqn = true;
             break;
-        case 'G':
-            args->gamma = arg ? atof (arg) : GAMMA;
+        case 'D':
+            args->epsilon_decay = arg ? atof (arg) : EPSILON_DECAY;
             break;
         case 'E':
             args->epsilon = arg ? atof (arg) : EPSILON;
             break;
         case 'F':
             args->epsilon_min = arg ? atof (arg) : EPSILON_MIN;
+            break;
+        case 'G':
+            args->gamma = arg ? atof (arg) : GAMMA;
             break;
         case 'H':
             args->history_size = arg ? atoi (arg) : HISTORY_SIZE;
@@ -67,9 +70,6 @@ error_t parse_opt(int key, char *arg, struct argp_state *state)
             break;
         case 'N':
             args->noop = arg ? atoi (arg) : NOOP;
-            break;
-        case 'D':
-            args->epsilon_decay = arg ? atof (arg) : EPSILON_DECAY;
             break;
         case 'R':
             args->dueling_dqn = true;
