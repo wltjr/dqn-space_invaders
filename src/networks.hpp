@@ -8,12 +8,12 @@
 struct BaseDQNImpl : torch::nn::Module
 {
     /**
-     * @brief Construct a new Graph object, empty/unused
+     * @brief Construct a new BaseDQNImpl object, empty/unused
      */
     BaseDQNImpl();
 
     /**
-     * @brief Destroy the Graph, empty/unused
+     * @brief Destroy the BaseDQNImpl, empty/unused
      */
     virtual ~BaseDQNImpl();
 
