@@ -77,6 +77,8 @@ including some code and/or project structure, go to the following:
   A Repository with C++ implementations of Reinforcement Learning Algorithms (Pytorch) -
 - [Atari-DQ](https://github.com/iewug/Atari-DQN)
   PyTorch implementation of DQN, DDQN and Dueling DQN to solve Atari games including PongNoFrameskip-v4, BreakoutNoFrameskip-v4 and BoxingNoFrameskip-v4
+- [DQN_pytorch](https://github.com/dxyang/DQN_pytorch)
+  Vanilla DQN, Double DQN, and Dueling DQN implemented in PyTorch 
 - [Data Transfer to and from PyTorch](https://www.simonwenkel.com/notes/software_libraries/pytorch/data_transfer_to_and_from_pytorch.html#stdvector-totorchtensor-and-back) -
   PyTorch and the underlying libtorch is only of use when copying data to it.
 - [The Essential Guide to Pytorch Loss Functions](https://www.v7labs.com/blog/pytorch-loss-functions) -
