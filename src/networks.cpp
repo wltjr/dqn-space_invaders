@@ -71,8 +71,7 @@ torch::Tensor DuelingDQNImpl::forward(torch::Tensor x)
     val = torch::relu(fc1_val(x));
 
     adv = fc2_adv(adv);
-    val = fc2_val(val).expand(x.size(0), actions);
-    
-    x = val + adv - adv.mean(1).unsqueeze(1).expand(x.size(0), actions);
-    return x;
+    val = fc2_val(val);
+
+    return val + adv - adv.mean();
 }
