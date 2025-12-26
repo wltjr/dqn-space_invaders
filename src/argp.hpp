@@ -11,6 +11,7 @@
 #define PT_FILE "dqn_space_invaders.pt"
 #define EPISODES 10
 #define NOOP 30
+#define PENALTY -1
 #define SKIP 2
 
 // hyper parameters
@@ -57,6 +58,7 @@ struct args
     int memory = MEMORY;
     int memory_min = MEMORY_MIN;
     int noop = NOOP;
+    int penalty = PENALTY;
     int skip = SKIP;
     int update_freq = UPDATE_FREQ;
     float alpha = ALPHA;
@@ -93,6 +95,7 @@ constexpr static struct argp_option options[] = {
     {"memory",'M',STRINGIFY(MEMORY),0," Replay memory buffer size",2},
     {"noop",'N',STRINGIFY(NOOP),0," Skip initial frames using noop action",2},
     {"rival",'R',0,0," Enable Dueling DQN",2},
+    {"penalty",'P',STRINGIFY(PENALTY),0," Penalty for noop action",2},
     {"skip",'S',STRINGIFY(SKIP),0," Skip frames and repeat actions",2},
     {"twice",'T',0,0," Enable Double DQN",2},
     {"update_freq",'U',STRINGIFY(UPDATE_FREQ),0," Target network update frequency",2},
