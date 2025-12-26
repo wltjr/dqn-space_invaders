@@ -74,6 +74,9 @@ error_t parse_opt(int key, char *arg, struct argp_state *state)
         case 'R':
             args->dueling_dqn = true;
             break;
+        case 'P':
+            args->penalty = arg ? atoi (arg) : PENALTY;
+            break;
         case 'S':
             args->skip = arg ? atoi (arg) : SKIP;
             break;
@@ -123,6 +126,7 @@ void print_training_params(args_t &args)
                 << "Lives:         " << args.lives << std::endl
                 << "Episodes:      " << args.episodes << std::endl
                 << "Clip Rewards:  " << args.clip << std::endl
+                << "Noop Penaly:   " << args.penalty << std::endl
                 << "Alpha:         " << args.alpha << std::endl
                 << "Gamma:         " << args.gamma << std::endl
                 << "Epsilon:       " << args.epsilon << std::endl
