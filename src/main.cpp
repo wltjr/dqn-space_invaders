@@ -398,7 +398,7 @@ void train(args &args,
                 }
                 // penalty for noop
                 else if(action == ale::Action::PLAYER_A_NOOP)
-                    reward = -1;
+                    reward = args.penalty;
 
                 // next state for memory
                 next = scale_crop_screen(ale, next);
